@@ -26,8 +26,8 @@ import { redisStore } from 'cache-manager-redis-store';
       autoDeleteFile: true,
     }),
     ThrottlerModule.forRoot([{
-      ttl: 60000, // 10 requests per minute
-      limit: 10,
+      ttl: 2000, // 1 requests per 2s
+      limit: 1,
     }]),
     CacheModule.register({
       ttl: 5, // seconds
