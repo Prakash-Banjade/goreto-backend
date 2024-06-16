@@ -11,7 +11,7 @@ services:
     ports:
       - "3306:3306"
     env_file:
-      - .env
+      - .env.test.local
     volumes:
       - mysql:/var/lib/mysql
 
@@ -22,24 +22,24 @@ services:
     ports:
       - '6379:6379'
     env_file:
-      - .env
+      - .env.test.local
     command: redis-server --save 20 1 --loglevel warning
     volumes:
       - cache:/data
 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: nestjs_starter
-    restart: always # on crash restart the container
-    env_file:
-      - .env
-    ports:
-      - "3000:3000"
-    depends_on:
-      - db
-      - redis
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: goreto
+  #   restart: always # on crash restart the container
+  #   env_file:
+  #     - .env.test.local
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - db
+  #     - redis
 
 volumes:
   mysql:
