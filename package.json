@@ -1,7 +1,7 @@
 {
-  "name": "blood_bank",
+  "name": "goreto-backend",
   "version": "0.0.1",
-  "description": "A NestJs starter template with full fledged authentication and authorization features and many more.",
+  "description": "Goreto, a meat shop is an ecommerce website.",
   "author": "Prakash Banjade",
   "contributors": [
     "Prakash Banjade (https://github.com/prakash-banjade)"
@@ -15,8 +15,8 @@
     "querybuilder",
     "morgan & winston"
   ],
-  "homepage": "https://github.com/Prakash-Banjade/nest_starter_authentication_authorization.git",
-  "private": false,
+  "homepage": "https://github.com/Prakash-Banjade/goreto-backend.git",
+  "private": true,
   "license": "MIT",
   "scripts": {
     "build": "nest build",
