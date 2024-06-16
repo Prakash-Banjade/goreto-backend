@@ -15,6 +15,8 @@ import { AbilitiesGuard } from './casl/guards/abilities.guard';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-store';
+import { AddressesModule } from './addresses/addresses.module';
+import { AccountsModule } from './accounts/accounts.module';
 
 @Module({
   imports: [
@@ -45,18 +47,20 @@ import { redisStore } from 'cache-manager-redis-store';
     UsersModule,
     AuthModule,
     CaslModule,
+    AddressesModule,
+    AccountsModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    {
-      provide: APP_GUARD,
-      useClass: AuthGuard, // global auth guard
-    },
-    {
-      provide: APP_GUARD,
-      useClass: AbilitiesGuard, // global ability guard
-    },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: AuthGuard, // global auth guard
+    // },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: AbilitiesGuard, // global ability guard
+    // },
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard, // global rate limiting, but can be overriden in route level

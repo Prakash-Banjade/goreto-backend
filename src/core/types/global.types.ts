@@ -18,3 +18,9 @@ export enum Action {
     UPDATE = 'update',
     DELETE = 'delete',
 }
+
+export enum Gender {
+    MALE = 'male',
+    FEMALE = 'female',
+    OTHER = 'other',
+}
