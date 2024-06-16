@@ -2,9 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
-import { PageOptionsDto } from 'src/core/dto/pageOptions.dto';
+import { IsNull, Not, Or, Repository } from 'typeorm';
 import paginatedData from 'src/core/utils/paginatedData';
+import { UserQueryDto } from './dto/user-query.dto';
+import { Deleted } from 'src/core/dto/query.dto';
 
 @Injectable()
 export class UsersService {
@@ -13,16 +14,21 @@ export class UsersService {
     @InjectRepository(User) private usersRepository: Repository<User>
   ) { }
 
-  async findAll(pageOptionsDto: PageOptionsDto) {
+  async findAll(queryDto: UserQueryDto) {
     const queryBuilder = this.queryBuilder();
+    const deletedAt = queryDto.deleted === Deleted.ONLY ? Not(IsNull()) : queryDto.deleted === Deleted.NONE ? IsNull() : Or(IsNull(), Not(IsNull()));
 
     queryBuilder
-      .orderBy("user.createdAt", pageOptionsDto.order)
-      .skip(pageOptionsDto.skip)
-      .take(pageOptionsDto.take)
-      .select(["user.id", "user.name", "user.email", "user.role", "user.image", "user.createdAt", "user.updatedAt"]);
+      .orderBy("user.createdAt", queryDto.order)
+      .skip(queryDto.skip)
+      .take(queryDto.take)
+      .withDeleted()
+      .where({ deletedAt })
+      .leftJoinAndSelect("user.address", "address")
+      .leftJoinAndSelect("user.account", "account")
+      .select(["user.id", "user.phone", "user.gender", "user.dob", "user.address", "user.account", "user.createdAt", "user.updatedAt"]);
 
-    return paginatedData(pageOptionsDto, queryBuilder);
+    return paginatedData(queryDto, queryBuilder);
   }
 
   async findOne(id: string) {
@@ -36,7 +42,7 @@ export class UsersService {
     const existingUser = await this.findOne(id);
 
     // TODO: update logic here
-    
+
     return await this.usersRepository.save(existingUser);
   }
 
@@ -46,9 +52,6 @@ export class UsersService {
 
     return {
       message: 'User removed',
-      user: {
-        email: existingUser.email,
-      }
     }
   }
 

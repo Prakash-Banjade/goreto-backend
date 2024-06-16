@@ -5,7 +5,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { SignInDto } from './dto/signIn.dto';
 import * as bcrypt from 'bcrypt';
@@ -14,17 +13,18 @@ import { RegisterDto } from './dto/register.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { CookieOptions, Request, Response } from 'express';
 import { AuthUser } from 'src/core/types/global.types';
+import { Account } from 'src/accounts/entities/account.entity';
 require('dotenv').config();
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(User) private usersRepository: Repository<User>,
+    @InjectRepository(Account) private accountsRepo: Repository<Account>,
     private jwtService: JwtService,
   ) {}
 
   async signIn(signInDto: SignInDto) {
-    const foundUser = await this.usersRepository.findOneBy({
+    const foundUser = await this.accountsRepo.findOneBy({
       email: signInDto.email,
     });
 
@@ -43,7 +43,7 @@ export class AuthService {
     const payload = {
       email: foundUser.email,
       userId: foundUser.id,
-      name: foundUser.name,
+      name: foundUser.firstName + ' ' + foundUser.lastName,
       role: foundUser.role,
     };
 
@@ -53,7 +53,7 @@ export class AuthService {
 
     foundUser.refresh_token = refresh_token;
 
-    await this.usersRepository.save(foundUser);
+    await this.accountsRepo.save(foundUser);
 
     return { access_token, refresh_token };
   }
@@ -74,23 +74,23 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto) {
-    const foundUser = await this.usersRepository.findOneBy({
+    const foundUser = await this.accountsRepo.findOneBy({
       email: registerDto.email,
     });
 
     if (foundUser)
       throw new BadRequestException('User with this email already exists');
 
-    const createdUser = this.usersRepository.create(registerDto);
+    const createdUser = this.accountsRepo.create(registerDto);
 
-    await this.usersRepository.save(createdUser);
+    await this.accountsRepo.save(createdUser);
 
     return {
       message: 'User created',
       user: {
         id: createdUser.id,
         email: createdUser.email,
-        name: createdUser.name,
+        name: createdUser.firstName + ' ' + createdUser.lastName,
       },
     };
   }
@@ -104,7 +104,7 @@ export class AuthService {
     if (!decoded) throw new ForbiddenException('Invalid token');
 
     // Is refresh token in db?
-    const foundUser = await this.usersRepository.findOneBy({
+    const foundUser = await this.accountsRepo.findOneBy({
       refresh_token,
       id: decoded.id,
     });
@@ -115,7 +115,7 @@ export class AuthService {
     const payload = {
       email: foundUser.email,
       userId: foundUser.id,
-      name: foundUser.name,
+      name: foundUser.firstName + ' ' + foundUser.lastName,
       role: foundUser.role,
     };
 
@@ -124,7 +124,7 @@ export class AuthService {
 
     // saving refresh_token with current user
     foundUser.refresh_token = new_refresh_token;
-    await this.usersRepository.save(foundUser);
+    await this.accountsRepo.save(foundUser);
 
     return {
       new_access_token,
@@ -138,7 +138,7 @@ export class AuthService {
     cookieOptions: CookieOptions,
   ) {
     // Is refresh token in db?
-    const foundUser = await this.usersRepository.findOneBy({ refresh_token });
+    const foundUser = await this.accountsRepo.findOneBy({ refresh_token });
 
     if (!foundUser) {
       res.clearCookie('refresh_token', cookieOptions);
@@ -147,10 +147,10 @@ export class AuthService {
 
     // delete refresh token in db
 	foundUser.refresh_token = null;
-    await this.usersRepository.save(foundUser);
+    await this.accountsRepo.save(foundUser);
   }
 
   async deleteUsers() {
-    await this.usersRepository.delete({});
+    await this.accountsRepo.delete({});
   }
 }

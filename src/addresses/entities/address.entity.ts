@@ -1,6 +1,7 @@
 import { BaseEntity } from "src/core/entities/base.entity";
 import { Country } from "src/core/types/country.type";
-import { Column, Entity } from "typeorm";
+import { User } from "src/users/entities/user.entity";
+import { Column, Entity, JoinColumn, OneToOne } from "typeorm";
 
 @Entity()
 export class Address extends BaseEntity {
@@ -20,4 +21,8 @@ export class Address extends BaseEntity {
 
     @Column({ type: 'int', unsigned: true })
     zipCode!: number;
+
+    @OneToOne(() => User, (user) => user.address, { cascade: true, onDelete: 'CASCADE' })
+    @JoinColumn()
+    user!: User;
 }

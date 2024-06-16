@@ -2,17 +2,17 @@ import { Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from 'src/users/entities/user.entity';
 import { JwtModule } from '@nestjs/jwt';
+import { Account } from 'src/accounts/entities/account.entity';
 require('dotenv').config();
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([Account]),
     JwtModule.register({
       global: true,
       secret: process.env.ACCESS_TOKEN_SECRET!,
-      signOptions: { expiresIn: '15m' },
+      signOptions: { expiresIn: process.env.ACCESS_TOKEN_EXPIRATION! },
     }),
   ],
   controllers: [AuthController],

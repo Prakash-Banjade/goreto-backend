@@ -60,6 +60,6 @@ export class AuthController {
         await this.authService.logout(refresh_token, res, this.cookieOptions);
 
         res.clearCookie('refresh_token', this.cookieOptions);
-        return res.sendStatus(204);
+        return;
     }
 }
