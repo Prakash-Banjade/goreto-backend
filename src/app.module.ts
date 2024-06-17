@@ -18,6 +18,9 @@ import { redisStore } from 'cache-manager-redis-store';
 import { AddressesModule } from './addresses/addresses.module';
 import { AccountsModule } from './accounts/accounts.module';
 import { ShippingAddressesModule } from './shipping-addresses/shipping-addresses.module';
+import { ProductsModule } from './products/products.module';
+import { CategoriesModule } from './categories/categories.module';
+import { PreparationsModule } from './product-filters/preparations/preparations.module';
 
 @Module({
   imports: [
@@ -51,6 +54,9 @@ import { ShippingAddressesModule } from './shipping-addresses/shipping-addresses
     AddressesModule,
     AccountsModule,
     ShippingAddressesModule,
+    ProductsModule,
+    CategoriesModule,
+    PreparationsModule,
   ],
   controllers: [AppController],
   providers: [

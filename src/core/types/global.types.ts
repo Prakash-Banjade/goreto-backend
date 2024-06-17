@@ -18,6 +18,7 @@ export enum Action {
     READ = 'read',
     UPDATE = 'update',
     DELETE = 'delete',
+    RESTORE = 'restore',
 }
 
 export enum Gender {
