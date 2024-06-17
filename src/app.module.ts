@@ -17,6 +17,7 @@ import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-store';
 import { AddressesModule } from './addresses/addresses.module';
 import { AccountsModule } from './accounts/accounts.module';
+import { ShippingAddressesModule } from './shipping-addresses/shipping-addresses.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { AccountsModule } from './accounts/accounts.module';
     CaslModule,
     AddressesModule,
     AccountsModule,
+    ShippingAddressesModule,
   ],
   controllers: [AppController],
   providers: [

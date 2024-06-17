@@ -1,5 +1,6 @@
 import { BaseEntity } from "src/core/entities/base.entity";
 import { Country } from "src/core/types/country.type";
+import { ShippingAddress } from "src/shipping-addresses/entities/shipping-address.entity";
 import { User } from "src/users/entities/user.entity";
 import { Column, Entity, JoinColumn, OneToOne } from "typeorm";
 
@@ -22,7 +23,10 @@ export class Address extends BaseEntity {
     @Column({ type: 'int', unsigned: true })
     zipCode!: number;
 
-    @OneToOne(() => User, (user) => user.address, { cascade: true, onDelete: 'CASCADE' })
+    @OneToOne(() => User, (user) => user.address, { cascade: true, nullable: true, onDelete: 'CASCADE' })
     @JoinColumn()
-    user!: User;
+    user?: User;
+
+    @OneToOne(() => ShippingAddress, (shippingAddress) => shippingAddress.address, { cascade: true, nullable: true, onDelete: 'CASCADE' })
+    shippingAddress?: Address;
 }

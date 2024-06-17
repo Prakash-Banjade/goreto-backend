@@ -21,7 +21,7 @@ export class AuthService {
   constructor(
     @InjectRepository(Account) private accountsRepo: Repository<Account>,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async signIn(signInDto: SignInDto) {
     const foundUser = await this.accountsRepo.findOneBy({
@@ -78,8 +78,7 @@ export class AuthService {
       email: registerDto.email,
     });
 
-    if (foundUser)
-      throw new BadRequestException('User with this email already exists');
+    if (foundUser) throw new BadRequestException('User with this email already exists');
 
     const createdUser = this.accountsRepo.create(registerDto);
 
@@ -146,7 +145,7 @@ export class AuthService {
     }
 
     // delete refresh token in db
-	foundUser.refresh_token = null;
+    foundUser.refresh_token = null;
     await this.accountsRepo.save(foundUser);
   }
 

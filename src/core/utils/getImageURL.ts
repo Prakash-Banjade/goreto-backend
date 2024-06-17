@@ -1,7 +1,7 @@
 import { FileSystemStoredFile } from "nestjs-form-data";
 require('dotenv').config();
 
-export default function getFileName(file: FileSystemStoredFile | string | undefined) {
+export default function getImageURL(file: FileSystemStoredFile | string | undefined) {
     if (!file) return null;
 
     if (file instanceof FileSystemStoredFile) {

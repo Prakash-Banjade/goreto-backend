@@ -1,5 +1,5 @@
 import { BaseEntity } from "src/core/entities/base.entity";
-import { Column, Entity, OneToOne } from "typeorm";
+import { Column, Entity, OneToMany, OneToOne } from "typeorm";
 import { Gender } from "src/core/types/global.types";
 import { Address } from "src/addresses/entities/address.entity";
 
@@ -14,6 +14,12 @@ export class User extends BaseEntity {
     @Column({ type: 'datetime', nullable: true })
     dob?: string;
 
+    @Column({ type: 'varchar', nullable: true })
+    image?: string;
+
     @OneToOne(() => Address, address => address.user, { nullable: true })
     address?: Address
+
+    @OneToMany(() => Address, address => address.user, { nullable: true })
+    shippingAddresses?: Address[]
 }

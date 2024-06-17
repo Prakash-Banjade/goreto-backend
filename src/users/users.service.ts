@@ -6,6 +6,7 @@ import { IsNull, Not, Or, Repository } from 'typeorm';
 import paginatedData from 'src/core/utils/paginatedData';
 import { UserQueryDto } from './dto/user-query.dto';
 import { Deleted } from 'src/core/dto/query.dto';
+import getImageURL from 'src/core/utils/getImageURL';
 
 @Injectable()
 export class UsersService {
@@ -41,7 +42,14 @@ export class UsersService {
   async update(id: string, updateUserDto: UpdateUserDto) {
     const existingUser = await this.findOne(id);
 
-    // TODO: update logic here
+    // evaluate profile image
+    const image = updateUserDto.image ? getImageURL(updateUserDto.image) : existingUser.image;
+
+    // update user
+    Object.assign(existingUser, {
+      ...updateUserDto,
+      image,
+    });
 
     return await this.usersRepository.save(existingUser);
   }

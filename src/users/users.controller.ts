@@ -6,10 +6,8 @@ import { FormDataRequest, FileSystemStoredFile } from 'nestjs-form-data';
 import { CaslAbilityFactory } from 'src/casl/casl-ability.factory/casl-ability.factory';
 import { ChekcAbilities } from 'src/core/decorators/abilities.decorator';
 import { Action } from 'src/core/types/global.types';
-import { User } from './entities/user.entity';
 import { ApiPaginatedResponse } from 'src/core/decorators/apiPaginatedResponse.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
-import { PageOptionsDto } from 'src/core/dto/pageOptions.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 
 @ApiBearerAuth()
