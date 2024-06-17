@@ -16,7 +16,7 @@ export class UsersService {
   ) { }
 
   async findAll(queryDto: UserQueryDto) {
-    const queryBuilder = this.queryBuilder();
+    const queryBuilder = this.usersRepository.createQueryBuilder('user');
     const deletedAt = queryDto.deleted === Deleted.ONLY ? Not(IsNull()) : queryDto.deleted === Deleted.NONE ? IsNull() : Or(IsNull(), Not(IsNull()));
 
     queryBuilder
@@ -25,9 +25,9 @@ export class UsersService {
       .take(queryDto.take)
       .withDeleted()
       .where({ deletedAt })
-      .leftJoinAndSelect("user.address", "address")
       .leftJoinAndSelect("user.account", "account")
-      .select(["user.id", "user.phone", "user.gender", "user.dob", "user.address", "user.account", "user.createdAt", "user.updatedAt"]);
+      .leftJoinAndSelect("user.address", "address")
+      .leftJoinAndSelect("user.shippingAddresses", "shippingAddresses")
 
     return paginatedData(queryDto, queryBuilder);
   }
@@ -61,9 +61,5 @@ export class UsersService {
     return {
       message: 'User removed',
     }
-  }
-
-  private queryBuilder() {
-    return this.usersRepository.createQueryBuilder('user');
   }
 }

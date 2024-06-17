@@ -2,6 +2,8 @@ import { BaseEntity } from "src/core/entities/base.entity";
 import { Column, Entity, OneToMany, OneToOne } from "typeorm";
 import { Gender } from "src/core/types/global.types";
 import { Address } from "src/addresses/entities/address.entity";
+import { Account } from "src/accounts/entities/account.entity";
+import { ShippingAddress } from "src/shipping-addresses/entities/shipping-address.entity";
 
 @Entity()
 export class User extends BaseEntity {
@@ -20,6 +22,9 @@ export class User extends BaseEntity {
     @OneToOne(() => Address, address => address.user, { nullable: true })
     address?: Address
 
-    @OneToMany(() => Address, address => address.user, { nullable: true })
-    shippingAddresses?: Address[]
+    @OneToMany(() => ShippingAddress, shippingAdddress => shippingAdddress.user, { nullable: true })
+    shippingAddresses?: ShippingAddress[]
+
+    @OneToOne(() => Account, account => account.user, { nullable: true })
+    account: Account
 }

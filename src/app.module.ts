@@ -55,22 +55,22 @@ import { ShippingAddressesModule } from './shipping-addresses/shipping-addresses
   controllers: [AppController],
   providers: [
     AppService,
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: AuthGuard, // global auth guard
-    // },
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: AbilitiesGuard, // global ability guard
-    // },
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard, // global auth guard
+    },
+    {
+      provide: APP_GUARD,
+      useClass: AbilitiesGuard, // global ability guard
+    },
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard, // global rate limiting, but can be overriden in route level
     },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor, // global caching, only get requests will be cached
-    },
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: CacheInterceptor, // global caching, only get requests will be cached
+    // },
   ],
 })
 export class AppModule { }

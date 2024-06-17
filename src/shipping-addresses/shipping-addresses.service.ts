@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { AddressesService } from 'src/addresses/addresses.service';
 import { UsersService } from 'src/users/users.service';
 import { extractAddressDto } from 'src/core/utils/extractAddressDto';
+import { AuthUser } from 'src/core/types/global.types';
 
 @Injectable()
 export class ShippingAddressesService {
@@ -16,8 +17,8 @@ export class ShippingAddressesService {
     private readonly usersService: UsersService,
   ) { }
 
-  async create(createShippingAddressDto: CreateShippingAddressDto) {
-    const user = await this.usersService.findOne(createShippingAddressDto.userId);
+  async create(createShippingAddressDto: CreateShippingAddressDto, currentUser: AuthUser) {
+    const user = await this.usersService.findOne(currentUser.userId);
 
     // create new address
     const address = await this.addressService.create(extractAddressDto<CreateShippingAddressDto>(createShippingAddressDto));
@@ -32,6 +33,7 @@ export class ShippingAddressesService {
       user,
       address,
     });
+
     return this.shippingAddressRepo.save(shippingAddress);
   }
 

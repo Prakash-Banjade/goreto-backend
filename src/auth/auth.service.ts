@@ -14,46 +14,54 @@ import { v4 as uuidv4 } from 'uuid';
 import { CookieOptions, Request, Response } from 'express';
 import { AuthUser } from 'src/core/types/global.types';
 import { Account } from 'src/accounts/entities/account.entity';
+import { User } from 'src/users/entities/user.entity';
 require('dotenv').config();
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(Account) private accountsRepo: Repository<Account>,
+    @InjectRepository(User) private usersRepo: Repository<User>,
     private jwtService: JwtService,
   ) { }
 
   async signIn(signInDto: SignInDto) {
-    const foundUser = await this.accountsRepo.findOneBy({
-      email: signInDto.email,
+    const foundAccount = await this.accountsRepo.findOne({
+      where: {
+        email: signInDto.email,
+      },
+      relations: {
+        user: true,
+      }
     });
 
-    if (!foundUser)
+    if (!foundAccount)
       throw new UnauthorizedException(
         'This email is not registered. Please register first.',
       );
 
     const isPasswordValid = await bcrypt.compare(
       signInDto.password,
-      foundUser.password,
+      foundAccount.password,
     );
 
     if (!isPasswordValid) throw new BadRequestException('Invalid password');
 
-    const payload = {
-      email: foundUser.email,
-      userId: foundUser.id,
-      name: foundUser.firstName + ' ' + foundUser.lastName,
-      role: foundUser.role,
+    const payload: AuthUser = {
+      email: foundAccount.email,
+      accountId: foundAccount.id,
+      userId: foundAccount.user.id,
+      name: foundAccount.firstName + ' ' + foundAccount.lastName,
+      role: foundAccount.role,
     };
 
     const access_token = await this.createAccessToken(payload);
 
-    const refresh_token = await this.createRefreshToken(foundUser.id);
+    const refresh_token = await this.createRefreshToken(foundAccount.id);
 
-    foundUser.refresh_token = refresh_token;
+    foundAccount.refresh_token = refresh_token;
 
-    await this.accountsRepo.save(foundUser);
+    await this.accountsRepo.save(foundAccount);
 
     return { access_token, refresh_token };
   }
@@ -74,22 +82,28 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto) {
-    const foundUser = await this.accountsRepo.findOneBy({
+    const foundAccount = await this.accountsRepo.findOneBy({
       email: registerDto.email,
     });
 
-    if (foundUser) throw new BadRequestException('User with this email already exists');
+    if (foundAccount) throw new BadRequestException('User with this email already exists');
 
-    const createdUser = this.accountsRepo.create(registerDto);
+    const newAccount = this.accountsRepo.create(registerDto);
 
-    await this.accountsRepo.save(createdUser);
+    const savedAccount = await this.accountsRepo.save(newAccount);
+
+    const newUser = this.usersRepo.create({
+      account: savedAccount,
+    });
+
+    await this.usersRepo.save(newUser);
 
     return {
       message: 'User created',
       user: {
-        id: createdUser.id,
-        email: createdUser.email,
-        name: createdUser.firstName + ' ' + createdUser.lastName,
+        id: newAccount.id,
+        email: newAccount.email,
+        name: newAccount.firstName + ' ' + newAccount.lastName,
       },
     };
   }
@@ -103,27 +117,33 @@ export class AuthService {
     if (!decoded) throw new ForbiddenException('Invalid token');
 
     // Is refresh token in db?
-    const foundUser = await this.accountsRepo.findOneBy({
-      refresh_token,
-      id: decoded.id,
+    const foundAccount = await this.accountsRepo.findOne({
+      where: {
+        refresh_token,
+        id: decoded.id,
+      },
+      relations: {
+        user: true
+      }
     });
 
-    if (!foundUser) throw new UnauthorizedException('Access Denied');
+    if (!foundAccount) throw new UnauthorizedException('Access Denied');
 
     // create new access token & refresh token
-    const payload = {
-      email: foundUser.email,
-      userId: foundUser.id,
-      name: foundUser.firstName + ' ' + foundUser.lastName,
-      role: foundUser.role,
+    const payload: AuthUser = {
+      email: foundAccount.email,
+      accountId: foundAccount.id,
+      userId: foundAccount.user.id,
+      name: foundAccount.firstName + ' ' + foundAccount.lastName,
+      role: foundAccount.role,
     };
 
     const new_access_token = await this.createAccessToken(payload);
-    const new_refresh_token = await this.createRefreshToken(foundUser.id);
+    const new_refresh_token = await this.createRefreshToken(foundAccount.id);
 
     // saving refresh_token with current user
-    foundUser.refresh_token = new_refresh_token;
-    await this.accountsRepo.save(foundUser);
+    foundAccount.refresh_token = new_refresh_token;
+    await this.accountsRepo.save(foundAccount);
 
     return {
       new_access_token,
@@ -137,19 +157,15 @@ export class AuthService {
     cookieOptions: CookieOptions,
   ) {
     // Is refresh token in db?
-    const foundUser = await this.accountsRepo.findOneBy({ refresh_token });
+    const foundAccount = await this.accountsRepo.findOneBy({ refresh_token });
 
-    if (!foundUser) {
+    if (!foundAccount) {
       res.clearCookie('refresh_token', cookieOptions);
       return res.sendStatus(204);
     }
 
     // delete refresh token in db
-    foundUser.refresh_token = null;
-    await this.accountsRepo.save(foundUser);
-  }
-
-  async deleteUsers() {
-    await this.accountsRepo.delete({});
+    foundAccount.refresh_token = null;
+    await this.accountsRepo.save(foundAccount);
   }
 }

@@ -1,8 +1,9 @@
 import { BaseEntity } from "src/core/entities/base.entity";
-import { BeforeInsert, BeforeUpdate, Column, Entity } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, OneToOne } from "typeorm";
 import * as bcrypt from 'bcrypt';
 import { Roles } from "src/core/types/global.types";
 import { BadRequestException } from "@nestjs/common";
+import { User } from "src/users/entities/user.entity";
 
 @Entity()
 export class Account extends BaseEntity {
@@ -26,6 +27,10 @@ export class Account extends BaseEntity {
 
     @Column({ type: 'varchar', nullable: true })
     refresh_token: string;
+
+    @OneToOne(() => User, user => user.account, { onDelete: 'CASCADE' })
+    @JoinColumn()
+    user: User
 
     @BeforeInsert()
     hashPassword() {

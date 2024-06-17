@@ -4,11 +4,12 @@ import { AuthService } from './auth.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { Account } from 'src/accounts/entities/account.entity';
+import { User } from 'src/users/entities/user.entity';
 require('dotenv').config();
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Account]),
+    TypeOrmModule.forFeature([Account, User]),
     JwtModule.register({
       global: true,
       secret: process.env.ACCESS_TOKEN_SECRET!,

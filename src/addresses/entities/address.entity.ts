@@ -28,5 +28,6 @@ export class Address extends BaseEntity {
     user?: User;
 
     @OneToOne(() => ShippingAddress, (shippingAddress) => shippingAddress.address, { cascade: true, nullable: true, onDelete: 'CASCADE' })
+    @JoinColumn()
     shippingAddress?: Address;
 }

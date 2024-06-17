@@ -2,18 +2,19 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { ShippingAddressesService } from './shipping-addresses.service';
 import { CreateShippingAddressDto } from './dto/create-shipping-address.dto';
 import { UpdateShippingAddressDto } from './dto/update-shipping-address.dto';
-import { Action } from 'src/core/types/global.types';
+import { Action, AuthUser } from 'src/core/types/global.types';
 import { ChekcAbilities } from 'src/core/decorators/abilities.decorator';
 import { ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from 'src/core/decorators/currentuser.decorator';
 
 @ApiTags('Shipping Addresses')
 @Controller('shipping-addresses')
 export class ShippingAddressesController {
-  constructor(private readonly shippingAddressesService: ShippingAddressesService) {}
+  constructor(private readonly shippingAddressesService: ShippingAddressesService) { }
 
   @Post()
-  create(@Body() createShippingAddressDto: CreateShippingAddressDto) {
-    return this.shippingAddressesService.create(createShippingAddressDto);
+  create(@Body() createShippingAddressDto: CreateShippingAddressDto, @CurrentUser() currentUser: AuthUser) {
+    return this.shippingAddressesService.create(createShippingAddressDto, currentUser);
   }
 
   @Get()
