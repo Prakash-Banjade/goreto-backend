@@ -4,9 +4,10 @@ import { CreateShippingAddressDto } from './dto/create-shipping-address.dto';
 import { UpdateShippingAddressDto } from './dto/update-shipping-address.dto';
 import { Action, AuthUser } from 'src/core/types/global.types';
 import { ChekcAbilities } from 'src/core/decorators/abilities.decorator';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from 'src/core/decorators/currentuser.decorator';
 
+@ApiBearerAuth()
 @ApiTags('Shipping Addresses')
 @Controller('shipping-addresses')
 export class ShippingAddressesController {
