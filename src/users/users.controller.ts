@@ -32,9 +32,9 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
-  @FormDataRequest({ storage: FileSystemStoredFile })
   @Patch(':id')
   @ApiConsumes('multipart/form-data')
+  @FormDataRequest({ storage: FileSystemStoredFile })
   @ChekcAbilities({ action: Action.UPDATE, subject: 'all' })
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
