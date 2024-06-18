@@ -55,6 +55,10 @@ export class ProductsService {
       .take(queryDto.search ? undefined : queryDto.take)
       .withDeleted()
       .where({ deletedAt })
+      .leftJoinAndSelect("product.category", "category")
+      .leftJoinAndSelect("product.discount", "discount")
+      .leftJoinAndSelect("product.cutType", "cutType")
+      .leftJoinAndSelect("product.preparation", "preparation")
       .andWhere(new Brackets(qb => {
         qb.where([
           { productName: ILike(`%${queryDto.search ?? ''}%`) },
