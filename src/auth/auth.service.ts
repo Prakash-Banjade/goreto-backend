@@ -15,6 +15,10 @@ import { CookieOptions, Request, Response } from 'express';
 import { AuthUser } from 'src/core/types/global.types';
 import { Account } from 'src/accounts/entities/account.entity';
 import { User } from 'src/users/entities/user.entity';
+import { UsersRepository } from 'src/users/repository/user.repository';
+import { CartsRepository } from 'src/carts/repository/carts.repository';
+import { AccountsRepository } from 'src/accounts/repository/account.repository';
+import { Cart } from 'src/carts/entities/cart.entity';
 require('dotenv').config();
 
 @Injectable()
@@ -22,7 +26,11 @@ export class AuthService {
   constructor(
     @InjectRepository(Account) private accountsRepo: Repository<Account>,
     @InjectRepository(User) private usersRepo: Repository<User>,
+    @InjectRepository(Cart) private cartsRepo: Repository<Cart>,
     private jwtService: JwtService,
+    private userRepository: UsersRepository,
+    private cartsReposiory: CartsRepository,
+    private accountRepository: AccountsRepository,
   ) { }
 
   async signIn(signInDto: SignInDto) {
@@ -90,13 +98,19 @@ export class AuthService {
 
     const newAccount = this.accountsRepo.create(registerDto);
 
-    const savedAccount = await this.accountsRepo.save(newAccount);
+    const savedAccount = await this.accountRepository.insert(newAccount); // ensure transaction
 
     const newUser = this.usersRepo.create({
       account: savedAccount,
     });
 
-    await this.usersRepo.save(newUser);
+    const savedUser = await this.userRepository.createUser(newUser);
+
+    const cart = this.cartsRepo.create({
+      user: savedUser,
+    })
+
+    await this.cartsReposiory.createCart(cart);
 
     return {
       message: 'User created',
