@@ -6,7 +6,7 @@ import { ApiPaginatedResponse } from 'src/core/decorators/apiPaginatedResponse.d
 import { ProductQueryDto } from './dto/product-query.dto';
 import { ChekcAbilities } from 'src/core/decorators/abilities.decorator';
 import { Action } from 'src/core/types/global.types';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/core/decorators/setPublicRoute.decorator';
 import { FileSystemStoredFile, FormDataRequest } from 'nestjs-form-data';
 
@@ -17,6 +17,7 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) { }
 
   @Post()
+  @ApiConsumes('multipart/form-data')
   @ChekcAbilities({ action: Action.CREATE, subject: 'all' })
   @FormDataRequest({ storage: FileSystemStoredFile })
   create(@Body() createProductDto: CreateProductDto) {
@@ -37,6 +38,7 @@ export class ProductsController {
   }
 
   @Patch(':id')
+  @ApiConsumes('multipart/form-data')
   @ChekcAbilities({ action: Action.UPDATE, subject: 'all' })
   @FormDataRequest({ storage: FileSystemStoredFile })
   update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {

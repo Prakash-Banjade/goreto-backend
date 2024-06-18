@@ -4,7 +4,7 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Action } from 'src/core/types/global.types';
 import { ChekcAbilities } from 'src/core/decorators/abilities.decorator';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/core/decorators/setPublicRoute.decorator';
 import { FileSystemStoredFile, FormDataRequest } from 'nestjs-form-data';
 
@@ -15,6 +15,7 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) { }
 
   @Post()
+  @ApiConsumes('multipart/form-data')
   @ChekcAbilities({ action: Action.CREATE, subject: 'all' })
   @FormDataRequest({ storage: FileSystemStoredFile })
   create(@Body() createCategoryDto: CreateCategoryDto) {
@@ -36,6 +37,7 @@ export class CategoriesController {
   }
 
   @Patch(':id')
+  @ApiConsumes('multipart/form-data')
   @ChekcAbilities({ action: Action.UPDATE, subject: 'all' })
   @FormDataRequest({ storage: FileSystemStoredFile })
   update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
