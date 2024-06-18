@@ -24,7 +24,7 @@ export class ProductsService {
 
   async create(createProductDto: CreateProductDto) {
     // evaluate cutType, preparationType, category
-    const dependencies = this.extractDependencies(createProductDto)
+    const dependencies = await this.extractDependencies(createProductDto)
 
     // evaluate coverImage
     const coverImage = getImageURL(createProductDto.coverImage);
@@ -41,6 +41,7 @@ export class ProductsService {
       coverImage,
       otherImages: images
     });
+
     return await this.productRepo.save(product);
   }
 
@@ -56,7 +57,7 @@ export class ProductsService {
       .where({ deletedAt })
       .andWhere(new Brackets(qb => {
         qb.where([
-          { firstName: ILike(`%${queryDto.search ?? ''}%`) },
+          { productName: ILike(`%${queryDto.search ?? ''}%`) },
         ]);
         // queryDto.gender && qb.andWhere({ gender: queryDto.gender });
 
@@ -87,7 +88,7 @@ export class ProductsService {
     const existing = await this.findOne(id);
 
     // evaluate cutType, preparationType, category
-    const dependencies = this.extractDependencies(updateProductDto, existing)
+    const dependencies = await this.extractDependencies(updateProductDto, existing)
 
     // evaluate coverImage
     const coverImage = updateProductDto.coverImage ? getImageURL(updateProductDto.coverImage) : existing.coverImage;
