@@ -6,6 +6,7 @@ import { Action } from 'src/core/types/global.types';
 import { ChekcAbilities } from 'src/core/decorators/abilities.decorator';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/core/decorators/setPublicRoute.decorator';
+import { FileSystemStoredFile, FormDataRequest } from 'nestjs-form-data';
 
 @ApiBearerAuth()
 @ApiTags('Categories')
@@ -15,6 +16,7 @@ export class CategoriesController {
 
   @Post()
   @ChekcAbilities({ action: Action.CREATE, subject: 'all' })
+  @FormDataRequest({ storage: FileSystemStoredFile })
   create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoriesService.create(createCategoryDto);
   }
@@ -35,6 +37,7 @@ export class CategoriesController {
 
   @Patch(':id')
   @ChekcAbilities({ action: Action.UPDATE, subject: 'all' })
+  @FormDataRequest({ storage: FileSystemStoredFile })
   update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
     return this.categoriesService.update(id, updateCategoryDto);
   }
