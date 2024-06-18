@@ -4,11 +4,11 @@ import { CreatePreparationDto } from './dto/create-preparation.dto';
 import { UpdatePreparationDto } from './dto/update-preparation.dto';
 import { Action } from 'src/core/types/global.types';
 import { ChekcAbilities } from 'src/core/decorators/abilities.decorator';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/core/decorators/setPublicRoute.decorator';
 
 @ApiBearerAuth()
-@Controller('Preparations')
+@ApiTags('Preparations')
 @Controller('preparations')
 export class PreparationsController {
   constructor(private readonly preparationsService: PreparationsService) { }
