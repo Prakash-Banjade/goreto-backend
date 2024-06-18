@@ -21,6 +21,8 @@ import { ShippingAddressesModule } from './shipping-addresses/shipping-addresses
 import { ProductsModule } from './products/products.module';
 import { CategoriesModule } from './categories/categories.module';
 import { PreparationsModule } from './product-filters/preparations/preparations.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -36,6 +38,9 @@ import { PreparationsModule } from './product-filters/preparations/preparations.
       ttl: 2000, // 1 requests per 2s
       limit: 1,
     }]),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'), // serve static files eg: localhost:3000/filename.png
+    }),
     CacheModule.register({
       ttl: 5, // seconds
       max: 10, // maximum number of items in cache
@@ -73,10 +78,10 @@ import { PreparationsModule } from './product-filters/preparations/preparations.
       provide: APP_GUARD,
       useClass: ThrottlerGuard, // global rate limiting, but can be overriden in route level
     },
-    // {
-    //   provide: APP_INTERCEPTOR,
-    //   useClass: CacheInterceptor, // global caching, only get requests will be cached
-    // },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CacheInterceptor, // global caching, only get requests will be cached
+    },
   ],
 })
 export class AppModule { }
