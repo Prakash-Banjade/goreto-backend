@@ -21,7 +21,7 @@ async function bootstrap() {
 
   // Helmet helps secure your apps by setting various HTTP headers. It’s not specific to NestJS but is essential for web applications to prevent common attacks.
   app.use(helmet());
-  app.setGlobalPrefix('api/v1')
+  app.setGlobalPrefix('api')
 
   // security header middleware
   const securityHeadersMiddleware = new SecurityHeadersMiddleware();
