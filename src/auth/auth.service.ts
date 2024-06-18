@@ -11,7 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
 import { v4 as uuidv4 } from 'uuid';
-import { CookieOptions, Request, Response } from 'express';
+import { CookieOptions, Response } from 'express';
 import { AuthUser } from 'src/core/types/global.types';
 import { Account } from 'src/accounts/entities/account.entity';
 import { User } from 'src/users/entities/user.entity';
@@ -29,7 +29,7 @@ export class AuthService {
     @InjectRepository(Cart) private cartsRepo: Repository<Cart>,
     private jwtService: JwtService,
     private userRepository: UsersRepository,
-    private cartsReposiory: CartsRepository,
+    private cartsRepository: CartsRepository,
     private accountRepository: AccountsRepository,
   ) { }
 
@@ -110,7 +110,7 @@ export class AuthService {
       user: savedUser,
     })
 
-    await this.cartsReposiory.createCart(cart);
+    await this.cartsRepository.createCart(cart);
 
     return {
       message: 'User created',
