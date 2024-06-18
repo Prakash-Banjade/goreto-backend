@@ -1,6 +1,8 @@
 import { INestApplication } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { AuthModule } from "src/auth/auth.module";
+import { CartItemsModule } from "src/cart-items/cart-items.module";
+import { CartsModule } from "src/carts/carts.module";
 import { CategoriesModule } from "src/categories/categories.module";
 import { CutTypesModule } from "src/product-filters/cut-types/cut-types.module";
 import { PreparationsModule } from "src/product-filters/preparations/preparations.module";
@@ -26,7 +28,7 @@ export function setupSwagger(app: INestApplication): void {
         .build();
 
     const document = SwaggerModule.createDocument(app, config, {
-        include: [AuthModule, UsersModule, ProductsModule, CategoriesModule, CutTypesModule, PreparationsModule, ShippingAddressesModule],
+        include: [AuthModule, UsersModule, ProductsModule, CategoriesModule, CutTypesModule, PreparationsModule, ShippingAddressesModule, CartsModule, CartItemsModule],
     });
 
     SwaggerModule.setup('docs', app, document, {

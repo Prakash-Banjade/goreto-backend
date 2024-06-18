@@ -2,9 +2,10 @@ import { Category } from "src/categories/entities/category.entity";
 import { CONSTANTS } from "src/core/CONSTANTS";
 import { BaseEntity } from "src/core/entities/base.entity";
 import { CutType } from "src/product-filters/cut-types/entities/cut-type.entity";
-import { Column, Entity, ManyToOne, OneToOne } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, OneToOne } from "typeorm";
 import { Discount } from "./discount.entity";
 import { Preparation } from "src/product-filters/preparations/entities/preparation.entity";
+import { CartItem } from "src/cart-items/entities/cart-item.entity";
 
 @Entity()
 export class Product extends BaseEntity {
@@ -40,4 +41,7 @@ export class Product extends BaseEntity {
 
     @OneToOne(() => Discount, discount => discount.product, { nullable: true })
     discount: Discount
+
+    @OneToMany(() => CartItem, cartItem => cartItem.product, { nullable: true })
+    cartItems: CartItem[]
 }

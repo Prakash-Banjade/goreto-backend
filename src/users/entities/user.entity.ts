@@ -4,6 +4,7 @@ import { Gender } from "src/core/types/global.types";
 import { Address } from "src/addresses/entities/address.entity";
 import { Account } from "src/accounts/entities/account.entity";
 import { ShippingAddress } from "src/shipping-addresses/entities/shipping-address.entity";
+import { Cart } from "src/carts/entities/cart.entity";
 
 @Entity()
 export class User extends BaseEntity {
@@ -27,4 +28,8 @@ export class User extends BaseEntity {
 
     @OneToOne(() => Account, account => account.user, { nullable: true })
     account: Account
+
+    @OneToOne(() => Cart, cart => cart.user)
+    cart: Cart
+
 }
