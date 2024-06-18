@@ -7,6 +7,8 @@ import { CategoriesModule } from 'src/categories/categories.module';
 import { CutTypesModule } from 'src/product-filters/cut-types/cut-types.module';
 import { PreparationsModule } from 'src/product-filters/preparations/preparations.module';
 import { Discount } from './entities/discount.entity';
+import { DiscountsController } from './discounts.controller';
+import { DiscountsService } from './discounts.service';
 
 @Global()
 @Module({
@@ -19,8 +21,8 @@ import { Discount } from './entities/discount.entity';
     CutTypesModule,
     PreparationsModule,
   ],
-  controllers: [ProductsController],
-  providers: [ProductsService],
+  controllers: [ProductsController, DiscountsController],
+  providers: [ProductsService, DiscountsService],
   exports: [ProductsService],
 })
 export class ProductsModule { }
