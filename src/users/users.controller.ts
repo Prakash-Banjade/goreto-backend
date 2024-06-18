@@ -16,7 +16,6 @@ import { UserQueryDto } from './dto/user-query.dto';
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
-    private readonly abilityFactory: CaslAbilityFactory
   ) { }
 
   // Users are created from auth/register
