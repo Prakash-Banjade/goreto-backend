@@ -29,7 +29,7 @@ export function setupSwagger(app: INestApplication): void {
         include: [AuthModule, UsersModule, ProductsModule, CategoriesModule, CutTypesModule, PreparationsModule, ShippingAddressesModule],
     });
 
-    SwaggerModule.setup('api', app, document, {
+    SwaggerModule.setup('docs', app, document, {
         customSiteTitle: 'Goreto - A meat shop',
         customfavIcon: 'https://avatars.githubusercontent.com/u/6936373?s=200&v=4',
         customJs: [
