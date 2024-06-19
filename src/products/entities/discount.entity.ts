@@ -4,7 +4,7 @@ import { Product } from "./product.entity";
 
 @Entity()
 export class Discount extends BaseEntity {
-    @OneToOne(() => Product, product => product.discount)
+    @OneToOne(() => Product, product => product.discount, { onDelete: 'CASCADE' })
     @JoinColumn()
     product: Product;
 
