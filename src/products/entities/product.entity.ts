@@ -12,6 +12,9 @@ export class Product extends BaseEntity {
     @Column({ type: 'varchar' })
     productName: string
 
+    @Column({ type: 'text', nullable: true })
+    slug: string;
+
     @Column({ type: 'longtext' })
     description: string
 

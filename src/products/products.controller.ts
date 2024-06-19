@@ -32,12 +32,12 @@ export class ProductsController {
   }
 
   @Public()
-  @Get(':id')
+  @Get(':slug')
   findOne(@Param('id') id: string) {
     return this.productsService.findOne(id);
   }
 
-  @Patch(':id')
+  @Patch(':slug')
   @ApiConsumes('multipart/form-data')
   @ChekcAbilities({ action: Action.UPDATE, subject: 'all' })
   @FormDataRequest({ storage: FileSystemStoredFile })

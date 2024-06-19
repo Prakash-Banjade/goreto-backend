@@ -12,6 +12,7 @@ import { ProductQueryDto } from './dto/product-query.dto';
 import { Deleted } from 'src/core/dto/query.dto';
 import paginatedData from 'src/core/utils/paginatedData';
 import { FileSystemStoredFile } from 'nestjs-form-data';
+import { generateSlug } from 'src/core/utils/generateSlug';
 
 @Injectable()
 export class ProductsService {
@@ -35,10 +36,13 @@ export class ProductsService {
       images = createProductDto.otherImages.map(image => getImageURL(image));
     }
 
+    const slug = generateSlug(createProductDto.productName)
+
     const product = this.productRepo.create({
       ...createProductDto,
       ...dependencies,
       coverImage,
+      slug,
       otherImages: images
     });
 
@@ -73,9 +77,9 @@ export class ProductsService {
     return paginatedData(queryDto, queryBuilder);
   }
 
-  async findOne(id: string) {
+  async findOne(slug: string) {
     const existing = this.productRepo.findOne({
-      where: { id },
+      where: { slug },
       relations: {
         category: true,
         discount: true,
@@ -88,8 +92,8 @@ export class ProductsService {
     return existing;
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto) {
-    const existing = await this.findOne(id);
+  async update(slug: string, updateProductDto: UpdateProductDto) {
+    const existing = await this.findOne(slug);
 
     // evaluate cutType, preparationType, category
     const dependencies = await this.extractDependencies(updateProductDto, existing)
