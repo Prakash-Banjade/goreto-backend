@@ -4,9 +4,11 @@ import { CreateCartItemDto } from './dto/create-cart-item.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { ApiPaginatedResponse } from 'src/core/decorators/apiPaginatedResponse.decorator';
 import { QueryDto } from 'src/core/dto/query.dto';
-import { Action } from 'src/core/types/global.types';
+import { Action, AuthUser } from 'src/core/types/global.types';
 import { ChekcAbilities } from 'src/core/decorators/abilities.decorator';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from 'src/core/decorators/currentuser.decorator';
+import { User } from 'src/users/entities/user.entity';
 
 @ApiBearerAuth()
 @ApiTags('Cart Items')
@@ -15,9 +17,9 @@ export class CartItemsController {
   constructor(private readonly cartItemsService: CartItemsService) { }
 
   @Post()
-  @ChekcAbilities({ action: Action.CREATE, subject: 'all' })
-  create(@Body() createCartItemDto: CreateCartItemDto) {
-    return this.cartItemsService.create(createCartItemDto);
+  @ChekcAbilities({ action: Action.CREATE, subject: User })
+  create(@Body() createCartItemDto: CreateCartItemDto, @CurrentUser() currentUser: AuthUser) {
+    return this.cartItemsService.create(createCartItemDto, currentUser);
   }
 
   @Get()
@@ -34,7 +36,7 @@ export class CartItemsController {
   }
 
   @Patch(':id')
-  @ChekcAbilities({ action: Action.UPDATE, subject: 'all' })
+  @ChekcAbilities({ action: Action.UPDATE, subject: User })
   update(@Param('id') id: string, @Body() updateCartItemDto: UpdateCartItemDto) {
     return this.cartItemsService.update(id, updateCartItemDto);
   }

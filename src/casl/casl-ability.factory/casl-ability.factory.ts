@@ -14,16 +14,22 @@ export class CaslAbilityFactory {
 
         if (user.role === Roles.ADMIN) {
             can(Action.MANAGE, 'all')
+            can(Action.MANAGE, User)
         } else if (user.role === Roles.MODERATOR) {
             can(Action.CREATE, 'all')
             can(Action.READ, 'all')
             can(Action.UPDATE, 'all')
             cannot(Action.DELETE, 'all').because('Only admins are allowed to delete records.')
         } else if (user.role === Roles.USER) {
-            can(Action.READ, 'all')
+            cannot(Action.READ, 'all').because('You do not have access privillege to this operation.')
+            can(Action.READ, User)
+            cannot(Action.RESTORE, 'all').because('You do not have access privillege to this operation.')
             cannot(Action.CREATE, 'all').because('You do not have access privillege to this operation.')
+            can(Action.CREATE, User)
             cannot(Action.UPDATE, 'all').because('You do not have access privillege to this operation.')
+            can(Action.UPDATE, User)
             cannot(Action.DELETE, 'all').because('You do not have access privillege to this operation.')
+            can(Action.DELETE, User)
         }
 
         return build({

@@ -21,11 +21,13 @@ export class UsersController {
 
   @Get()
   @ApiPaginatedResponse(CreateUserDto)
+  @ChekcAbilities({ action: Action.READ, subject: 'all' })
   findAll(@Query() queryDto: UserQueryDto) {
     return this.usersService.findAll(queryDto);
   }
 
   @Get(':id')
+  @ChekcAbilities({ action: Action.READ, subject: 'all' })
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
