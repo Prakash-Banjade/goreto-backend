@@ -7,6 +7,7 @@ import { CategoriesModule } from "src/categories/categories.module";
 import { CutTypesModule } from "src/product-filters/cut-types/cut-types.module";
 import { PreparationsModule } from "src/product-filters/preparations/preparations.module";
 import { ProductsModule } from "src/products/products.module";
+import { ReviewsModule } from "src/reviews/reviews.module";
 import { ShippingAddressesModule } from "src/shipping-addresses/shipping-addresses.module";
 import { UsersModule } from "src/users/users.module";
 
@@ -28,7 +29,7 @@ export function setupSwagger(app: INestApplication): void {
         .build();
 
     const document = SwaggerModule.createDocument(app, config, {
-        include: [AuthModule, UsersModule, ProductsModule, CategoriesModule, CutTypesModule, PreparationsModule, ShippingAddressesModule, CartsModule, CartItemsModule],
+        include: [AuthModule, UsersModule, ProductsModule, CategoriesModule, CutTypesModule, PreparationsModule, ShippingAddressesModule, CartsModule, CartItemsModule, ReviewsModule],
     });
 
     SwaggerModule.setup('docs', app, document, {

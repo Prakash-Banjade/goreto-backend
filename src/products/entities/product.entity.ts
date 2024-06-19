@@ -6,6 +6,7 @@ import { Column, Entity, ManyToOne, OneToMany, OneToOne } from "typeorm";
 import { Discount } from "./discount.entity";
 import { Preparation } from "src/product-filters/preparations/entities/preparation.entity";
 import { CartItem } from "src/cart-items/entities/cart-item.entity";
+import { Review } from "src/reviews/entities/review.entity";
 
 @Entity()
 export class Product extends BaseEntity {
@@ -47,4 +48,7 @@ export class Product extends BaseEntity {
 
     @OneToMany(() => CartItem, cartItem => cartItem.product, { nullable: true })
     cartItems: CartItem[]
+
+    @OneToMany(() => Review, review => review.product, { nullable: true })
+    reviews: Review[]
 }

@@ -35,15 +35,18 @@ export class CartsController {
     return this.cartsService.findOne(id);
   }
 
-  @Patch(':id')
-  @ChekcAbilities({ action: Action.UPDATE, subject: 'all' })
-  update(@Param('id') id: string, @Body() updateCartDto: UpdateCartDto) {
-    return this.cartsService.update(id, updateCartDto);
-  }
+  // CART DOESN'T NEED TO BE UPDATE OR DELETED. IT'S ONLY USED TO ADD ITEMS TO THE CART
+  // CART IS AUTOMATICALLY DELETED WHEN THE USER IS DELETED
 
-  @Delete(':id')
-  @ChekcAbilities({ action: Action.DELETE, subject: 'all' })
-  remove(@Param('id') id: string) {
-    return this.cartsService.remove(id);
-  }
+  // @Patch(':id')
+  // @ChekcAbilities({ action: Action.UPDATE, subject: 'all' })
+  // update(@Param('id') id: string, @Body() updateCartDto: UpdateCartDto) {
+  //   return this.cartsService.update(id, updateCartDto);
+  // }
+
+  // @Delete(':id')
+  // @ChekcAbilities({ action: Action.DELETE, subject: 'all' })
+  // remove(@Param('id') id: string) {
+  //   return this.cartsService.remove(id);
+  // }
 }

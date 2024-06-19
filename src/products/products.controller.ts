@@ -33,16 +33,16 @@ export class ProductsController {
 
   @Public()
   @Get(':slug')
-  findOne(@Param('id') id: string) {
-    return this.productsService.findOne(id);
+  findOne(@Param('slug') slug: string) {
+    return this.productsService.findOne(slug);
   }
 
   @Patch(':slug')
   @ApiConsumes('multipart/form-data')
   @ChekcAbilities({ action: Action.UPDATE, subject: 'all' })
   @FormDataRequest({ storage: FileSystemStoredFile })
-  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    return this.productsService.update(id, updateProductDto);
+  update(@Param('slug') slug: string, @Body() updateProductDto: UpdateProductDto) {
+    return this.productsService.update(slug, updateProductDto);
   }
 
   @Post('deleteMany')

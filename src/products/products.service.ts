@@ -3,7 +3,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
-import { Brackets, ILike, In, IsNull, Not, Or, Repository } from 'typeorm';
+import { Brackets, Equal, ILike, In, IsNull, Not, Or, Repository } from 'typeorm';
 import { CategoriesService } from 'src/categories/categories.service';
 import { CutTypesService } from 'src/product-filters/cut-types/cut-types.service';
 import { PreparationsService } from 'src/product-filters/preparations/preparations.service';
@@ -63,6 +63,7 @@ export class ProductsService {
       .leftJoinAndSelect("product.discount", "discount")
       .leftJoinAndSelect("product.cutType", "cutType")
       .leftJoinAndSelect("product.preparation", "preparation")
+      .leftJoinAndSelect("product.reviews", "reviews")
       .andWhere(new Brackets(qb => {
         qb.where([
           { productName: ILike(`%${queryDto.search ?? ''}%`) },
@@ -78,13 +79,14 @@ export class ProductsService {
   }
 
   async findOne(slug: string) {
-    const existing = this.productRepo.findOne({
-      where: { slug },
+    const existing = await this.productRepo.findOne({
+      where: { slug: Equal(slug) },
       relations: {
         category: true,
         discount: true,
         cutType: true,
-        preparation: true
+        preparation: true,
+        reviews: true
       }
     });
 

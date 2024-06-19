@@ -5,6 +5,7 @@ import { Address } from "src/addresses/entities/address.entity";
 import { Account } from "src/accounts/entities/account.entity";
 import { ShippingAddress } from "src/shipping-addresses/entities/shipping-address.entity";
 import { Cart } from "src/carts/entities/cart.entity";
+import { Review } from "src/reviews/entities/review.entity";
 
 @Entity()
 export class User extends BaseEntity {
@@ -31,5 +32,8 @@ export class User extends BaseEntity {
 
     @OneToOne(() => Cart, cart => cart.user)
     cart: Cart
+
+    @OneToMany(() => Review, review => review.user, { nullable: true })
+    reviews: Review[]
 
 }

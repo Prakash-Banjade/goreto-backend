@@ -37,19 +37,11 @@ export class CartsService {
       .take(queryDto.search ? undefined : queryDto.take)
       .withDeleted()
       .where({ deletedAt })
-      .leftJoinAndSelect("cart.category", "category")
-      .leftJoinAndSelect("cart.discount", "discount")
-      .leftJoinAndSelect("cart.cutType", "cutType")
-      .leftJoinAndSelect("cart.preparation", "preparation")
       .andWhere(new Brackets(qb => {
         // qb.where([
         //   { cartName: ILike(`%${queryDto.search ?? ''}%`) },
         // ]);
         // queryDto.gender && qb.andWhere({ gender: queryDto.gender });
-
-      }))
-      .andWhere(new Brackets(qb => {
-        // if (queryDto.country) qb.andWhere("LOWER(address.country) LIKE LOWER(:country)", { country: `%${queryDto.country ?? ''}%` });
       }))
 
     return paginatedData(queryDto, queryBuilder);
@@ -64,17 +56,17 @@ export class CartsService {
     return existing
   }
 
-  async update(id: string, updateCartDto: UpdateCartDto) {
-    return updateCartDto
-  }
+  // async update(id: string, updateCartDto: UpdateCartDto) {
+  //   return updateCartDto
+  // }
 
-  async remove(id: string) {
-    const existing = await this.findOne(id);
+  // async remove(id: string) {
+  //   const existing = await this.findOne(id);
 
-    await this.cartRepo.softRemove(existing);
+  //   await this.cartRepo.softRemove(existing);
 
-    return {
-      message: 'Cart removed',
-    }
-  }
+  //   return {
+  //     message: 'Cart removed',
+  //   }
+  // }
 }
