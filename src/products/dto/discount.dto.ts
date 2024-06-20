@@ -4,7 +4,7 @@ import { Transform } from "class-transformer";
 import { IsDateString, IsNotEmpty, IsString, IsUUID, Max, Min } from "class-validator";
 
 export class CreateDiscountDto {
-    @ApiProperty({ type: String, format: 'uuid', description: 'Product id' })
+    @ApiProperty({ type: String, description: 'Product slug' })
     @IsString()
     @IsNotEmpty()
     productId: string;
