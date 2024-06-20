@@ -7,6 +7,7 @@ import paginatedData from 'src/core/utils/paginatedData';
 import { UserQueryDto } from './dto/user-query.dto';
 import { Deleted } from 'src/core/dto/query.dto';
 import getImageURL from 'src/core/utils/getImageURL';
+import { AuthUser } from 'src/core/types/global.types';
 
 @Injectable()
 export class UsersService {

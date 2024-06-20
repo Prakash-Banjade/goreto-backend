@@ -51,6 +51,14 @@ export class ShippingAddressesService {
     return existingAddress;
   }
 
+  async getDefaultShippingAddress(currentUser: AuthUser) {
+    const defaultShippingAddress = await this.shippingAddressRepo.findOne({
+      where: { user: { id: currentUser.userId }, default: true },
+    })
+
+    return defaultShippingAddress;
+  }
+
   async update(id: string, updateShippingAddressDto: UpdateShippingAddressDto) {
     const existingShippingAddress = await this.findOne(id);
 

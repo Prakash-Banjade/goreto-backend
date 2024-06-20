@@ -76,8 +76,8 @@ export class AuthService {
 
   async createAccessToken(payload: AuthUser) {
     return await this.jwtService.signAsync(payload, {
-      expiresIn: '1m',
-      secret: process.env.ACCESS_TOKEN_SECRET,
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRATION!,
+      secret: process.env.ACCESS_TOKEN_SECRET!,
     });
   }
 
@@ -85,7 +85,7 @@ export class AuthService {
     const tokenId = uuidv4();
     return await this.jwtService.signAsync(
       { id: userId, tokenId: tokenId },
-      { expiresIn: '7d', secret: process.env.REFRESH_TOKEN_SECRET },
+      { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION!, secret: process.env.REFRESH_TOKEN_SECRET },
     );
   }
 

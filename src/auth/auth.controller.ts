@@ -3,9 +3,10 @@ import { AuthService } from './auth.service';
 import { SignInDto } from './dto/signIn.dto';
 import { CookieOptions, Request, Response } from 'express';
 import { RegisterDto } from './dto/register.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/core/decorators/setPublicRoute.decorator';
 import { TransactionInterceptor } from 'src/core/interceptors/transaction.interceptor';
+import { FileSystemStoredFile, FormDataRequest } from 'nestjs-form-data';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -22,17 +23,21 @@ export class AuthController {
     @Public()
     @HttpCode(HttpStatus.OK)
     @Post('login')
+    @ApiConsumes('multipart/form-data')
+    @FormDataRequest({ storage: FileSystemStoredFile })
     async signIn(@Body() signInDto: SignInDto, @Res({ passthrough: true }) res: Response, @Req() req: Request) {
         const { access_token, refresh_token } = await this.authService.signIn(signInDto);
 
         res.cookie('refresh_token', refresh_token, this.cookieOptions);
 
-        return { access_token };
+        return { access_token, token: access_token, new_token: access_token };
     }
 
     @Public()
     @Post('refresh')
     @HttpCode(HttpStatus.OK)
+    @ApiConsumes('multipart/form-data')
+    @FormDataRequest({ storage: FileSystemStoredFile })
     async refreshToken(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
         const refresh_token = req.cookies?.refresh_token;
         if (!refresh_token) throw new UnauthorizedException('No refresh token provided');
@@ -46,6 +51,8 @@ export class AuthController {
 
     @Public()
     @Post('register')
+    @ApiConsumes('multipart/form-data')
+    @FormDataRequest({ storage: FileSystemStoredFile })
     @UseInterceptors(TransactionInterceptor)
     async register(@Body() registerDto: RegisterDto) {
         return await this.authService.register(registerDto);

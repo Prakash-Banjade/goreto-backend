@@ -7,6 +7,7 @@ import { Discount } from "./discount.entity";
 import { Preparation } from "src/product-filters/preparations/entities/preparation.entity";
 import { CartItem } from "src/cart-items/entities/cart-item.entity";
 import { Review } from "src/reviews/entities/review.entity";
+import { OrderItem } from "src/orders/entities/order-item.entity";
 
 @Entity()
 export class Product extends BaseEntity {
@@ -60,4 +61,7 @@ export class Product extends BaseEntity {
     calculateCurrentPrice() {
         this.currentPrice = this.discount ? this.price - (this.price * this.discount?.discountPercentage / 100) : this.price;
     }
+
+    @OneToMany(() => OrderItem, orderItem => orderItem.product, { nullable: true })
+    orderItems: OrderItem[]
 }

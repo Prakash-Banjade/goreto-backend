@@ -37,7 +37,7 @@ async function bootstrap() {
   setupSwagger(app);
 
   // setup morgan
-  setupMorgan(app);
+  // setupMorgan(app);
 
 
   app.listen(PORT).then(() => {

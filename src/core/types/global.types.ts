@@ -26,3 +26,24 @@ export enum Gender {
     FEMALE = 'female',
     OTHER = 'other',
 }
+
+export enum OrderStatus {
+    PENDING = 'pending',
+    PROCESSING = 'processing',
+    SHIPPED = 'shipped',
+    DELIVERED = 'delivered',
+    CANCELLED = 'cancelled',
+}
+
+export enum PaymentMethod {
+    CASH = 'cash',
+    CREDIT = 'credit',
+    PAYPAL = 'paypal',
+    STRIPE = 'stripe',
+}
+
+export enum PaymentStatus {
+    PENDING = 'pending',
+    COMPLETED = 'completed',
+    FAILED = 'failed',
+}

@@ -9,6 +9,7 @@ import { PreparationsModule } from 'src/product-filters/preparations/preparation
 import { Discount } from './entities/discount.entity';
 import { DiscountsController } from './discounts.controller';
 import { DiscountsService } from './discounts.service';
+import { ProductsRepository } from './repository/product.repository';
 
 @Global()
 @Module({
@@ -22,7 +23,7 @@ import { DiscountsService } from './discounts.service';
     PreparationsModule,
   ],
   controllers: [ProductsController, DiscountsController],
-  providers: [ProductsService, DiscountsService],
-  exports: [ProductsService],
+  providers: [ProductsService, DiscountsService, ProductsRepository],
+  exports: [ProductsService, ProductsRepository],
 })
 export class ProductsModule { }

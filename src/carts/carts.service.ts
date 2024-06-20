@@ -8,6 +8,7 @@ import { CartsRepository } from './repository/carts.repository';
 import { UsersService } from 'src/users/users.service';
 import { Deleted, QueryDto } from 'src/core/dto/query.dto';
 import paginatedData from 'src/core/utils/paginatedData';
+import { AuthUser } from 'src/core/types/global.types';
 
 @Injectable()
 export class CartsService {
@@ -51,6 +52,17 @@ export class CartsService {
     const existing = await this.cartRepo.findOne({
       where: { id }
     })
+    if (!existing) throw new BadRequestException('Cart not found');
+
+    return existing
+  }
+
+  async getMyCart(currentUser: AuthUser) {
+    const existing = await this.cartRepo.findOne({
+      where: { user: { id: currentUser.userId } },
+      relations: { cartItems: { product: true } }
+    })
+    console.log(existing)
     if (!existing) throw new BadRequestException('Cart not found');
 
     return existing

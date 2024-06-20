@@ -12,5 +12,6 @@ import { UsersModule } from 'src/users/users.module';
   ],
   controllers: [ShippingAddressesController],
   providers: [ShippingAddressesService],
+  exports: [ShippingAddressesService],
 })
 export class ShippingAddressesModule { }

@@ -3,11 +3,14 @@ import { CartsService } from './carts.service';
 import { CreateCartDto } from './dto/create-cart.dto';
 import { UpdateCartDto } from './dto/update-cart.dto';
 import { TransactionInterceptor } from 'src/core/interceptors/transaction.interceptor';
-import { Action } from 'src/core/types/global.types';
+import { Action, AuthUser } from 'src/core/types/global.types';
 import { ChekcAbilities } from 'src/core/decorators/abilities.decorator';
 import { ApiPaginatedResponse } from 'src/core/decorators/apiPaginatedResponse.decorator';
 import { QueryDto } from 'src/core/dto/query.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from 'src/core/decorators/currentuser.decorator';
+import { User } from 'src/users/entities/user.entity';
+import logger from 'src/logger';
 
 @ApiBearerAuth()
 @ApiTags('Carts')
@@ -18,21 +21,27 @@ export class CartsController {
   @Post()
   @UseInterceptors(TransactionInterceptor)
   @ChekcAbilities({ action: Action.CREATE, subject: 'all' })
-  create(@Body() createCartDto: CreateCartDto) {
-    return this.cartsService.create(createCartDto);
+  async create(@Body() createCartDto: CreateCartDto) {
+    return await this.cartsService.create(createCartDto);
   }
 
   @Get()
   @ChekcAbilities({ action: Action.READ, subject: 'all' })
   @ApiPaginatedResponse(CreateCartDto)
-  findAll(@Query() queryDto: QueryDto) {
-    return this.cartsService.findAll(queryDto);
+  async findAll(@Query() queryDto: QueryDto) {
+    return await this.cartsService.findAll(queryDto);
+  }
+
+  @Get('myCart')
+  @ChekcAbilities({ action: Action.READ, subject: User })
+  async getMyCart(@CurrentUser() currentUser: AuthUser) {    
+    return await this.cartsService.getMyCart(currentUser);
   }
 
   @Get(':id')
   @ChekcAbilities({ action: Action.READ, subject: 'all' })
-  findOne(@Param('id') id: string) {
-    return this.cartsService.findOne(id);
+  async findOne(@Param('id') id: string) {
+    return await this.cartsService.findOne(id);
   }
 
   // CART DOESN'T NEED TO BE UPDATE OR DELETED. IT'S ONLY USED TO ADD ITEMS TO THE CART
