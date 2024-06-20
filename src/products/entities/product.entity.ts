@@ -2,7 +2,7 @@ import { Category } from "src/categories/entities/category.entity";
 import { CONSTANTS } from "src/core/CONSTANTS";
 import { BaseEntity } from "src/core/entities/base.entity";
 import { CutType } from "src/product-filters/cut-types/entities/cut-type.entity";
-import { Column, Entity, ManyToOne, OneToMany, OneToOne } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany, OneToOne } from "typeorm";
 import { Discount } from "./discount.entity";
 import { Preparation } from "src/product-filters/preparations/entities/preparation.entity";
 import { CartItem } from "src/cart-items/entities/cart-item.entity";
@@ -24,6 +24,9 @@ export class Product extends BaseEntity {
 
     @Column({ type: 'varchar', default: CONSTANTS.defaultProductPriceUnit })
     priceUnit: string
+
+    @Column({ type: 'real' })
+    currentPrice: number
 
     @Column({ type: 'int', default: 0 })
     stockQuantity: number
@@ -51,4 +54,10 @@ export class Product extends BaseEntity {
 
     @OneToMany(() => Review, review => review.product, { nullable: true })
     reviews: Review[]
+
+    @BeforeUpdate()
+    @BeforeInsert()
+    calculateCurrentPrice() {
+        this.currentPrice = this.discount ? this.price - (this.price * this.discount?.discountPercentage / 100) : this.price;
+    }
 }
