@@ -19,10 +19,10 @@ export class DiscountsController {
     create(@Body() createDiscountDto: CreateDiscountDto) {
         return this.discountService.create(createDiscountDto);
     }
-
-    @Public()
+    
     @Get()
     @ApiPaginatedResponse(CreateDiscountDto)
+    @ChekcAbilities({ action: Action.READ, subject: 'all' })
     findAll(@Query() queryDto: QueryDto) {
         return this.discountService.findAll(queryDto);
     }
