@@ -30,7 +30,7 @@ export class AuthController {
 
         res.cookie('refresh_token', refresh_token, this.cookieOptions);
 
-        return { access_token, token: access_token, new_token: access_token };
+        return { access_token };
     }
 
     @Public()
