@@ -12,7 +12,6 @@ export class CreateAddressDto {
 
     @ApiPropertyOptional({ type: String, description: 'Address 2' })
     @IsString()
-    @IsNotEmpty()
     @IsOptional()
     address2?: string;
 
