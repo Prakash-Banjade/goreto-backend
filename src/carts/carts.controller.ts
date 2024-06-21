@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, Query } from '@nestjs/common';
 import { CartsService } from './carts.service';
 import { CreateCartDto } from './dto/create-cart.dto';
-import { UpdateCartDto } from './dto/update-cart.dto';
 import { TransactionInterceptor } from 'src/core/interceptors/transaction.interceptor';
 import { Action, AuthUser } from 'src/core/types/global.types';
 import { ChekcAbilities } from 'src/core/decorators/abilities.decorator';
@@ -31,7 +30,7 @@ export class CartsController {
     return await this.cartsService.findAll(queryDto);
   }
 
-  @Get('myCart')
+  @Get('my-cart')
   @ChekcAbilities({ action: Action.READ, subject: User })
   async getMyCart(@CurrentUser() currentUser: AuthUser) {    
     return await this.cartsService.getMyCart(currentUser);
