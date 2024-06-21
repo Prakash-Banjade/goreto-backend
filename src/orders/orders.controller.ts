@@ -10,6 +10,7 @@ import { ChekcAbilities } from 'src/core/decorators/abilities.decorator';
 import { TransactionInterceptor } from 'src/core/interceptors/transaction.interceptor';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { FileSystemStoredFile, FormDataRequest } from 'nestjs-form-data';
+import { User } from 'src/users/entities/user.entity';
 
 @ApiBearerAuth()
 @ApiTags('Orders')
@@ -32,7 +33,7 @@ export class OrdersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @CurrentUser() currentUser: AuthUser) {
+  findOne(@Param('id') id: string, @CurrentUser() currentUser: AuthUser) { // both user and admin can access
     return this.ordersService.findOne(id, currentUser);
   }
 
@@ -41,9 +42,18 @@ export class OrdersController {
   @ChekcAbilities({ action: Action.UPDATE, subject: 'all' })
   @ApiConsumes('multipart/form-data')
   @FormDataRequest({ storage: FileSystemStoredFile })
-  update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto, @CurrentUser() currentUser: AuthUser) {
-    return this.ordersService.update(id, updateOrderDto, currentUser);
+  update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) { // ONLY STATUS CAN BE CHANGED BY ADMIN
+    return this.ordersService.update(id, updateOrderDto);
   }
+
+  @Patch(':id')
+  @UseInterceptors(TransactionInterceptor)
+  @ChekcAbilities({ action: Action.UPDATE, subject: User })
+  cancelMyOrder(@Param('id') id: string, @CurrentUser() currentUser: AuthUser) {
+    return this.ordersService.cancelOrder(id, currentUser);
+  }
+
+
 
   // @Delete(':id')
   // remove(@Param('id') id: string) {
