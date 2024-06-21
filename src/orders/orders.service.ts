@@ -3,11 +3,10 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Order } from './entities/order.entity';
-import { Brackets, ILike, IsNull, Not, Or, Repository } from 'typeorm';
+import { Brackets, IsNull, Not, Or, Repository } from 'typeorm';
 import { OrderQueryDto } from './dto/order-query.dto';
 import { AuthUser, PaymentMethod, Roles } from 'src/core/types/global.types';
 import { UsersService } from 'src/users/users.service';
-import { ProductsService } from 'src/products/products.service';
 import { CartsService } from 'src/carts/carts.service';
 import { ShippingAddressesService } from 'src/shipping-addresses/shipping-addresses.service';
 import { Product } from 'src/products/entities/product.entity';
@@ -52,7 +51,7 @@ export class OrdersService {
 
     let shippingAddress = defaultShippingAddress;
     if (shippingAddressId) {
-      const foundShippingAddress = await this.shippingAddressesService.findOne(shippingAddressId);
+      const foundShippingAddress = await this.shippingAddressesService.findOne(shippingAddressId, currentUser);
       if (!foundShippingAddress || foundShippingAddress.user.id !== user.id) throw new NotFoundException('Shipping address not found');
       shippingAddress = foundShippingAddress;
     }
@@ -63,9 +62,8 @@ export class OrdersService {
       if (!cartItem) throw new NotFoundException('Cart item not found');
 
       const product = cartItem.product;
-      if (!product || product.stockQuantity < cartItem.quantity) {
-        throw new BadRequestException('Product not available or insufficient stock');
-      }
+      if (!product) throw new BadRequestException(`Not available: ${product.productName}`);
+      if (product.stockQuantity < cartItem.quantity) throw new BadRequestException(`Insufficient stock: ${product.productName} \n In Stock: ${product.stockQuantity} \n Requested: ${cartItem.quantity}`);
     }
 
 
@@ -95,6 +93,8 @@ export class OrdersService {
       await this.productsRepository.saveProduct(product); // transaction
     }
 
+    // TODO: REMOVE CART-ITEMS AFTER ORDER IS CREATED ??
+
     // process payment
     const payment = this.paymentsRepo.create({
       order: savedOrder,
@@ -103,7 +103,9 @@ export class OrdersService {
 
     await this.paymentsRepository.savePayment(payment); // transaction
 
-    return savedOrder;
+    return {
+      message: 'Order has been placed. Thanks for choosing us.',
+    };
   }
 
   async findAll(queryDto: OrderQueryDto, currentUser: AuthUser) {
