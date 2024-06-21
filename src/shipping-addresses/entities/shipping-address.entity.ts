@@ -1,4 +1,5 @@
 import { Address } from "src/addresses/entities/address.entity";
+import { CONSTANTS } from "src/core/CONSTANTS";
 import { BaseEntity } from "src/core/entities/base.entity";
 import { Order } from "src/orders/entities/order.entity";
 import { User } from "src/users/entities/user.entity";
@@ -16,5 +17,8 @@ export class ShippingAddress extends BaseEntity {
     default!: boolean
 
     @OneToOne(() => Order, (order) => order.shippingAddress)
-    order: Order
+    order!: Order
+
+    @Column({ type: 'varchar', default: CONSTANTS.defaultAddressName })
+    addressName!: string
 }
