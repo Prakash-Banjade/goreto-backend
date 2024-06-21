@@ -37,13 +37,16 @@ export class ShippingAddressesService {
     return this.shippingAddressRepo.save(shippingAddress);
   }
 
-  async findAll() {
-    return await this.shippingAddressRepo.find();
+  async findAll(currentUser: AuthUser) {
+    return await this.shippingAddressRepo.find({
+      where: { user: { id: currentUser.userId } },
+      relations: { address: true },
+    });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, currentUser: AuthUser) {
     const existingAddress = await this.shippingAddressRepo.findOne({
-      where: { id },
+      where: { id, user: { id: currentUser.userId } },
       relations: { address: true, user: true },
     });
     if (!existingAddress) throw new Error('Address not found');
@@ -59,8 +62,8 @@ export class ShippingAddressesService {
     return defaultShippingAddress;
   }
 
-  async update(id: string, updateShippingAddressDto: UpdateShippingAddressDto) {
-    const existingShippingAddress = await this.findOne(id);
+  async update(id: string, updateShippingAddressDto: UpdateShippingAddressDto, currentUser: AuthUser) {
+    const existingShippingAddress = await this.findOne(id, currentUser);
 
     // update address
     const address = await this.addressService.update(existingShippingAddress.address?.id, updateShippingAddressDto);
@@ -76,8 +79,8 @@ export class ShippingAddressesService {
     return await this.shippingAddressRepo.save(existingShippingAddress);
   }
 
-  async remove(id: string) {
-    const existingShippingAddress = await this.findOne(id);
+  async remove(id: string, currentUser: AuthUser) {
+    const existingShippingAddress = await this.findOne(id, currentUser);
     return await this.shippingAddressRepo.remove(existingShippingAddress);
   }
 }
