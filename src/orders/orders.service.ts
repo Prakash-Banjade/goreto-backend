@@ -56,7 +56,8 @@ export class OrdersService {
       shippingAddress = foundShippingAddress;
     }
 
-    // validate cart-items
+    // validate cart-items & calculate total amount
+    let totalAmount: number = 0;
     for (const cartItemId of cartItemIds) {
       const cartItem = cart.cartItems.find(item => item.id === cartItemId);
       if (!cartItem) throw new NotFoundException('Cart item not found');
@@ -64,6 +65,8 @@ export class OrdersService {
       const product = cartItem.product;
       if (!product) throw new BadRequestException(`Not available: ${product.productName}`);
       if (product.stockQuantity < cartItem.quantity) throw new BadRequestException(`Insufficient stock: ${product.productName} \n In Stock: ${product.stockQuantity} \n Requested: ${cartItem.quantity}`);
+
+      totalAmount += cartItem.price;
     }
 
 
@@ -71,6 +74,7 @@ export class OrdersService {
     const order = this.ordersRepo.create({
       user,
       shippingAddress,
+      totalAmount,
     })
 
     const savedOrder = await this.ordersRepository.saveOrder(order); // transaction
@@ -120,7 +124,6 @@ export class OrdersService {
       .where({ deletedAt })
       .leftJoinAndSelect("order.orderItems", "orderItems")
       .leftJoinAndSelect("orderItems.product", "product")
-      .leftJoin("orderItems.product", "product")
       .andWhere(new Brackets(qb => {
         qb.where([
           // { productName: ILike(`%${queryDto.search ?? ''}%`) },
