@@ -178,6 +178,14 @@ export class OrdersService {
 
     await this.ordersRepository.saveOrder(existing); // transaction
 
+    // INCREASE THE PRODUCT STOCK
+    for (const orderItem of existing.orderItems) {
+      const product = orderItem.product;
+      if (!product) throw new BadRequestException(`Not available: ${product.productName}`);
+      product.stockQuantity += orderItem.quantity;
+      await this.productsRepository.saveProduct(product);
+    }
+
     return {
       message: "Order cancelled",
     }
