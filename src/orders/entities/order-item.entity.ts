@@ -1,7 +1,7 @@
 import { BaseEntity } from "src/core/entities/base.entity";
 import { Order } from "src/orders/entities/order.entity";
 import { Product } from "src/products/entities/product.entity";
-import { Column, Entity, ManyToOne } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne } from "typeorm";
 
 @Entity()
 export class OrderItem extends BaseEntity {
@@ -17,6 +17,8 @@ export class OrderItem extends BaseEntity {
     @Column({ type: 'real' })
     price: number
 
+    @BeforeInsert()
+    @BeforeUpdate()
     calculatePrice() {
         this.price = this.product.currentPrice * this.quantity;
     }
