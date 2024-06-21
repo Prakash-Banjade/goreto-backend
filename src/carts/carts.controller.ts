@@ -10,7 +10,6 @@ import { QueryDto } from 'src/core/dto/query.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from 'src/core/decorators/currentuser.decorator';
 import { User } from 'src/users/entities/user.entity';
-import logger from 'src/logger';
 
 @ApiBearerAuth()
 @ApiTags('Carts')
