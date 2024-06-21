@@ -11,7 +11,7 @@ import { PaymentsRepository } from './repository/payment.repository';
       Payment,
     ])
   ],
-  // controllers: [PaymentsController],
+  controllers: [PaymentsController],
   providers: [PaymentsService, PaymentsRepository],
   exports: [PaymentsService, PaymentsRepository],
 })
