@@ -33,6 +33,10 @@ export class UsersService {
     return paginatedData(queryDto, queryBuilder);
   }
 
+  async myDetails(currentUser: AuthUser) {
+    return await this.findOne(currentUser.userId);
+  }
+
   async findOne(id: string) {
     const existingUser = await this.usersRepository.findOne({
       where: { id },

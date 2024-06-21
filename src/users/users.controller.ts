@@ -4,10 +4,13 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { FormDataRequest, FileSystemStoredFile } from 'nestjs-form-data';
 import { ChekcAbilities } from 'src/core/decorators/abilities.decorator';
-import { Action } from 'src/core/types/global.types';
+import { Action, AuthUser } from 'src/core/types/global.types';
 import { ApiPaginatedResponse } from 'src/core/decorators/apiPaginatedResponse.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
+import { User } from './entities/user.entity';
+import { RegisterDto } from 'src/auth/dto/register.dto';
+import { CurrentUser } from 'src/core/decorators/currentuser.decorator';
 
 @ApiBearerAuth()
 @ApiTags('Users')
@@ -20,10 +23,16 @@ export class UsersController {
   // Users are created from auth/register
 
   @Get()
-  @ApiPaginatedResponse(CreateUserDto)
+  @ApiPaginatedResponse(RegisterDto)
   @ChekcAbilities({ action: Action.READ, subject: 'all' })
   findAll(@Query() queryDto: UserQueryDto) {
     return this.usersService.findAll(queryDto);
+  }
+
+  @Get('me')
+  @ChekcAbilities({ action: Action.READ, subject: User })
+  getMyDetails(@CurrentUser() user: AuthUser) {
+    return this.usersService.myDetails(user);
   }
 
   @Get(':id')
