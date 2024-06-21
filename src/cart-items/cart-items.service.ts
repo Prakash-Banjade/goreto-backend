@@ -24,6 +24,17 @@ export class CartItemsService {
     const user = await this.usersService.findOne(currentUser.userId)
     const product = await this.productsService.findOne(createCartItemDto.productId);
 
+    // ADD QUANTITY ON EXISTING
+    const existingCartItem = await this.cartItemsRepo.findOne({
+      where: { cart: { user: { id: currentUser.userId } }, product: { id: product.id } }
+    });
+    if (existingCartItem) {
+      existingCartItem.quantity += createCartItemDto.quantity;
+      existingCartItem.product = product; // this is just to calculate price in cart-item.entity
+      return await this.cartItemsRepo.save(existingCartItem);
+    }
+
+    // CREATE NEW
     const cartItem = this.cartItemsRepo.create({
       cart: user.cart,
       product,
@@ -63,7 +74,8 @@ export class CartItemsService {
 
   async findOne(id: string, currentUser: AuthUser) {
     const existing = await this.cartItemsRepo.findOne({
-      where: { id, cart: { user: { id: currentUser.userId } } }
+      where: { id, cart: { user: { id: currentUser.userId } } },
+      relations: { product: true }
     })
     if (!existing) throw new BadRequestException('Cart item not found');
 
@@ -77,7 +89,8 @@ export class CartItemsService {
 
     Object.assign(existing, {
       ...updateCartItemDto,
-      product
+      product,
+      price: product.currentPrice * (updateCartItemDto?.quantity ?? existing.quantity)
     })
 
     return await this.cartItemsRepo.save(existing);

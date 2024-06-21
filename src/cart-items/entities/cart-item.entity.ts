@@ -14,11 +14,10 @@ export class CartItem extends BaseEntity {
     @Column({ type: 'int', default: 1 })
     quantity: number;
 
-    @Column({ type: 'int', default: 0 })
+    @Column({ type: 'real' })
     price: number;
 
     @BeforeInsert()
-    @BeforeUpdate()
     calculatePrice() {
         this.price = this.product.price * this.quantity;
     }
