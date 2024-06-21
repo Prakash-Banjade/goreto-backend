@@ -20,13 +20,13 @@ export class Product extends BaseEntity {
     @Column({ type: 'longtext' })
     description: string
 
-    @Column({ type: 'real' })
+    @Column({ type: 'real', precision: 10, scale: 2 })
     price: number
 
     @Column({ type: 'varchar', default: CONSTANTS.defaultProductPriceUnit })
     priceUnit: string
 
-    @Column({ type: 'real' })
+    @Column({ type: 'real', precision: 10, scale: 2 })
     currentPrice: number
 
     @Column({ type: 'int', default: 0 })
