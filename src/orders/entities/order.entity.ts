@@ -28,7 +28,7 @@ export class Order extends BaseEntity {
     @BeforeInsert()
     @BeforeUpdate()
     calculateTotalAmount() {
-        this.totalAmount = this.orderItems.reduce((acc, item) => acc + item.price, 0);
+        this.totalAmount = this.orderItems? this.orderItems.reduce((acc, item) => acc + item.price, 0) : 0;
     }
 
     @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.PENDING })
