@@ -16,12 +16,13 @@ import { User } from 'src/users/entities/user.entity';
 export class CartsController {
   constructor(private readonly cartsService: CartsService) { }
 
-  @Post()
-  @UseInterceptors(TransactionInterceptor)
-  @ChekcAbilities({ action: Action.CREATE, subject: 'all' })
-  async create(@Body() createCartDto: CreateCartDto) {
-    return await this.cartsService.create(createCartDto);
-  }
+  // <-- CART IS CREATE ON USER REGISTRATION -->
+  // @Post()
+  // @UseInterceptors(TransactionInterceptor)
+  // @ChekcAbilities({ action: Action.CREATE, subject: 'all' })
+  // async create(@Body() createCartDto: CreateCartDto) {
+  //   return await this.cartsService.create(createCartDto);
+  // }
 
   @Get()
   @ChekcAbilities({ action: Action.READ, subject: 'all' })
