@@ -62,7 +62,6 @@ export class CartsService {
       where: { user: { id: currentUser.userId } },
       relations: { cartItems: { product: true } }
     })
-    console.log(existing)
     if (!existing) throw new BadRequestException('Cart not found');
 
     return existing
