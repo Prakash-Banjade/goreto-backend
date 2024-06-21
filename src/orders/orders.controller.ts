@@ -9,6 +9,7 @@ import { Action, AuthUser } from 'src/core/types/global.types';
 import { ChekcAbilities } from 'src/core/decorators/abilities.decorator';
 import { TransactionInterceptor } from 'src/core/interceptors/transaction.interceptor';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { FileSystemStoredFile, FormDataRequest } from 'nestjs-form-data';
 
 @ApiBearerAuth()
 @ApiTags('Orders')
@@ -19,6 +20,7 @@ export class OrdersController {
   @Post()
   @UseInterceptors(TransactionInterceptor)
   @ApiConsumes('multipart/form-data')
+  @FormDataRequest({ storage: FileSystemStoredFile })
   create(@Body() createOrderDto: CreateOrderDto, @CurrentUser() currentUser: AuthUser) {
     return this.ordersService.create(createOrderDto, currentUser);
   }
@@ -37,6 +39,8 @@ export class OrdersController {
   @Patch(':id')
   @UseInterceptors(TransactionInterceptor)
   @ChekcAbilities({ action: Action.UPDATE, subject: 'all' })
+  @ApiConsumes('multipart/form-data')
+  @FormDataRequest({ storage: FileSystemStoredFile })
   update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto, @CurrentUser() currentUser: AuthUser) {
     return this.ordersService.update(id, updateOrderDto, currentUser);
   }
