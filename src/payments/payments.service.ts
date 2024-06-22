@@ -47,7 +47,8 @@ export class PaymentsService {
         }
 
         return {
-          message: 'Please confirm payment'
+          message: 'Please confirm payment',
+          client_secret: paymentIntent.client_secret
         }
       }
     }
