@@ -18,6 +18,8 @@ import { ProductsRepository } from 'src/products/repository/product.repository';
 import { PaymentsRepository } from 'src/payments/repository/payment.repository';
 import { Deleted } from 'src/core/dto/query.dto';
 import paginatedData from 'src/core/utils/paginatedData';
+import { CancelOrderDto } from './dto/cancel-order.dto';
+import { CanceledOrder } from './entities/canceled-order.entity';
 
 @Injectable()
 export class OrdersService {
@@ -30,6 +32,7 @@ export class OrdersService {
     private readonly productsRepository: ProductsRepository,
     @InjectRepository(Payment) private readonly paymentsRepo: Repository<Payment>,
     private readonly paymentsRepository: PaymentsRepository,
+    @InjectRepository(CanceledOrder) private readonly canceledOrdersRepo: Repository<CanceledOrder>,
     private readonly usersService: UsersService,
     private readonly cartsService: CartsService,
     private readonly shippingAddressesService: ShippingAddressesService,
@@ -168,7 +171,7 @@ export class OrdersService {
     }
   }
 
-  async cancelOrder(id: string, currentUser: AuthUser) {
+  async cancelOrder(id: string, cancelOrderDto: CancelOrderDto, currentUser: AuthUser) {
     const existing = await this.findOne(id, currentUser);
     if (!existing) throw new NotFoundException('Order not found')
 
@@ -185,6 +188,14 @@ export class OrdersService {
       product.stockQuantity += orderItem.quantity;
       await this.productsRepository.saveProduct(product);
     }
+
+    // CREATE CANCELED ORDER
+    const canceledOrder = this.canceledOrdersRepo.create({
+      order: existing,
+      reason: cancelOrderDto.reason,
+      description: cancelOrderDto?.description
+    })
+    await this.ordersRepository.cancelOrder(canceledOrder);
 
     return {
       message: "Order cancelled",

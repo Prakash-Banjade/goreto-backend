@@ -11,6 +11,7 @@ import { TransactionInterceptor } from 'src/core/interceptors/transaction.interc
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { FileSystemStoredFile, FormDataRequest } from 'nestjs-form-data';
 import { User } from 'src/users/entities/user.entity';
+import { CancelOrderDto } from './dto/cancel-order.dto';
 
 @ApiBearerAuth()
 @ApiTags('Orders')
@@ -37,6 +38,14 @@ export class OrdersController {
     return this.ordersService.findOne(id, currentUser);
   }
 
+
+  @Patch(':id/cancel')
+  @UseInterceptors(TransactionInterceptor)
+  @ChekcAbilities({ action: Action.UPDATE, subject: User })
+  cancelMyOrder(@Param('id') id: string, @Body() cancelOrderDto: CancelOrderDto, @CurrentUser() currentUser: AuthUser) {
+    return this.ordersService.cancelOrder(id, cancelOrderDto, currentUser);
+  }
+
   @Patch(':id')
   @UseInterceptors(TransactionInterceptor)
   @ChekcAbilities({ action: Action.UPDATE, subject: 'all' })
@@ -46,12 +55,6 @@ export class OrdersController {
     return this.ordersService.update(id, updateOrderDto);
   }
 
-  @Patch(':id')
-  @UseInterceptors(TransactionInterceptor)
-  @ChekcAbilities({ action: Action.UPDATE, subject: User })
-  cancelMyOrder(@Param('id') id: string, @CurrentUser() currentUser: AuthUser) {
-    return this.ordersService.cancelOrder(id, currentUser);
-  }
 
 
 

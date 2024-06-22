@@ -11,6 +11,7 @@ import { OrderItem } from './entities/order-item.entity';
 import { OrdersRepository } from './repository/order.repository';
 import { OrderItemsRepository } from './repository/order-item.repository';
 import { PaymentsModule } from 'src/payments/payments.module';
+import { CanceledOrder } from './entities/canceled-order.entity';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { PaymentsModule } from 'src/payments/payments.module';
       OrderItem,
       Product,
       Payment,
+      CanceledOrder,
     ]),
     CartsModule,
     PaymentsModule,

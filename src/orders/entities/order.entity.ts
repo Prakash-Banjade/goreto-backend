@@ -5,6 +5,7 @@ import { ShippingAddress } from "src/shipping-addresses/entities/shipping-addres
 import { User } from "src/users/entities/user.entity";
 import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne } from "typeorm";
 import { OrderItem } from "./order-item.entity";
+import { CanceledOrder } from "./canceled-order.entity";
 
 @Entity()
 export class Order extends BaseEntity {
@@ -35,4 +36,8 @@ export class Order extends BaseEntity {
     @OneToOne(() => Payment, payment => payment.order, { onDelete: 'RESTRICT' })
     @JoinColumn()
     payment: Payment
+
+    @OneToOne(() => CanceledOrder, canceledOrder => canceledOrder.order, { onDelete: 'RESTRICT', nullable: true })
+    @JoinColumn()
+    canceledOrder: CanceledOrder
 }
