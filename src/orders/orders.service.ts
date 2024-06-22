@@ -5,17 +5,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Order } from './entities/order.entity';
 import { Brackets, IsNull, Not, Or, Repository } from 'typeorm';
 import { OrderQueryDto } from './dto/order-query.dto';
-import { AuthUser, OrderStatus, PaymentMethod, Roles } from 'src/core/types/global.types';
+import { AuthUser, OrderStatus, Roles } from 'src/core/types/global.types';
 import { UsersService } from 'src/users/users.service';
 import { CartsService } from 'src/carts/carts.service';
 import { ShippingAddressesService } from 'src/shipping-addresses/shipping-addresses.service';
 import { Product } from 'src/products/entities/product.entity';
-import { Payment } from 'src/payments/entities/payment.entity';
 import { OrdersRepository } from './repository/order.repository';
 import { OrderItem } from './entities/order-item.entity';
 import { OrderItemsRepository } from './repository/order-item.repository';
 import { ProductsRepository } from 'src/products/repository/product.repository';
-import { PaymentsRepository } from 'src/payments/repository/payment.repository';
 import { Deleted } from 'src/core/dto/query.dto';
 import paginatedData from 'src/core/utils/paginatedData';
 import { CancelOrderDto } from './dto/cancel-order.dto';
@@ -74,7 +72,6 @@ export class OrdersService {
 
 
     // create order
-    console.log('1')
     const order = this.ordersRepo.create({
       user,
       shippingAddress,
@@ -82,7 +79,6 @@ export class OrdersService {
     })
 
     const savedOrder = await this.ordersRepository.saveOrder(order); // transaction
-    console.log('2')
 
     // create order-items
     for (const cartItem of cart.cartItems) {
@@ -107,9 +103,7 @@ export class OrdersService {
     // PROCESS PAYMENT
     const paymentResult = await this.paymentService.create(savedOrder, createOrderDto.paymentMethod);
 
-    return {
-      message: paymentResult.message,
-    };
+    return paymentResult;
   }
 
   async findAll(queryDto: OrderQueryDto, currentUser: AuthUser) {
