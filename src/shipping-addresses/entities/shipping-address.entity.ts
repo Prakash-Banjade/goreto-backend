@@ -3,7 +3,7 @@ import { CONSTANTS } from "src/core/CONSTANTS";
 import { BaseEntity } from "src/core/entities/base.entity";
 import { Order } from "src/orders/entities/order.entity";
 import { User } from "src/users/entities/user.entity";
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, OneToOne } from "typeorm";
 
 @Entity()
 export class ShippingAddress extends BaseEntity {
@@ -16,8 +16,8 @@ export class ShippingAddress extends BaseEntity {
     @Column({ type: 'boolean', default: false })
     default!: boolean
 
-    @OneToOne(() => Order, (order) => order.shippingAddress)
-    order!: Order
+    @OneToMany(() => Order, (order) => order.shippingAddress, { nullable: true })
+    orders!: Order[]
 
     @Column({ type: 'varchar', default: CONSTANTS.defaultAddressName })
     addressName!: string

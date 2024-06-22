@@ -44,6 +44,7 @@ export enum PaymentMethod {
 
 export enum PaymentStatus {
     PENDING = 'pending',
+    AWATING_PAYMENT = 'awaitingPayment',
     COMPLETED = 'completed',
     FAILED = 'failed',
 }

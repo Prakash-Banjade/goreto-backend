@@ -29,8 +29,7 @@ export class Order extends BaseEntity {
     @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.PENDING })
     status: OrderStatus;
 
-    @OneToOne(() => ShippingAddress, shippingAddress => shippingAddress.order, { onDelete: 'RESTRICT' })
-    @JoinColumn()
+    @ManyToOne(() => ShippingAddress, shippingAddress => shippingAddress.orders, { onDelete: 'RESTRICT' })
     shippingAddress: ShippingAddress
 
     @OneToOne(() => Payment, payment => payment.order, { onDelete: 'RESTRICT' })

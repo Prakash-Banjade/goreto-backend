@@ -29,4 +29,7 @@ export class Payment extends BaseEntity {
 
     @Column({ type: 'enum', enum: PaymentStatus, default: PaymentStatus.PENDING })
     status: PaymentStatus
+
+    @Column({ type: 'uuid', nullable: true })
+    paymentIntentId: string
 }

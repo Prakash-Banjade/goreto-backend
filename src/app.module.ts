@@ -28,6 +28,7 @@ import { CartItemsModule } from './cart-items/cart-items.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
+import { StripeModule } from './stripe/stripe.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { PaymentsModule } from './payments/payments.module';
       autoDeleteFile: false,
       cleanupAfterSuccessHandle: false, // !important
     }),
+    StripeModule.forRootAsync(),
     ThrottlerModule.forRoot([{
       ttl: 2000, // 1 requests per 2s
       limit: 1,
@@ -88,10 +90,10 @@ import { PaymentsModule } from './payments/payments.module';
       provide: APP_GUARD,
       useClass: ThrottlerGuard, // global rate limiting, but can be overriden in route level
     },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor, // global caching, only get requests will be cached
-    },
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: CacheInterceptor, // global caching, only get requests will be cached
+    // },
   ],
 })
 export class AppModule { }

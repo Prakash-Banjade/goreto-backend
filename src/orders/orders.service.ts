@@ -20,6 +20,7 @@ import { Deleted } from 'src/core/dto/query.dto';
 import paginatedData from 'src/core/utils/paginatedData';
 import { CancelOrderDto } from './dto/cancel-order.dto';
 import { CanceledOrder } from './entities/canceled-order.entity';
+import { PaymentsService } from 'src/payments/payments.service';
 
 @Injectable()
 export class OrdersService {
@@ -30,8 +31,7 @@ export class OrdersService {
     private readonly orderItemsRepository: OrderItemsRepository,
     @InjectRepository(Product) private readonly productsRepo: Repository<Product>,
     private readonly productsRepository: ProductsRepository,
-    @InjectRepository(Payment) private readonly paymentsRepo: Repository<Payment>,
-    private readonly paymentsRepository: PaymentsRepository,
+    private readonly paymentService: PaymentsService,
     @InjectRepository(CanceledOrder) private readonly canceledOrdersRepo: Repository<CanceledOrder>,
     private readonly usersService: UsersService,
     private readonly cartsService: CartsService,
@@ -74,6 +74,7 @@ export class OrdersService {
 
 
     // create order
+    console.log('1')
     const order = this.ordersRepo.create({
       user,
       shippingAddress,
@@ -81,6 +82,7 @@ export class OrdersService {
     })
 
     const savedOrder = await this.ordersRepository.saveOrder(order); // transaction
+    console.log('2')
 
     // create order-items
     for (const cartItem of cart.cartItems) {
@@ -102,16 +104,11 @@ export class OrdersService {
 
     // TODO: REMOVE CART-ITEMS AFTER ORDER IS CREATED ??
 
-    // process payment
-    const payment = this.paymentsRepo.create({
-      order: savedOrder,
-      paymentMethod: PaymentMethod.CASH,
-    })
-
-    await this.paymentsRepository.savePayment(payment); // transaction
+    // PROCESS PAYMENT
+    const paymentResult = await this.paymentService.create(savedOrder, createOrderDto.paymentMethod);
 
     return {
-      message: 'Order has been placed. Thanks for choosing us.',
+      message: paymentResult.message,
     };
   }
 
@@ -160,6 +157,8 @@ export class OrdersService {
     })
     if (!existing) throw new NotFoundException('Order not found')
 
+    if (existing.status === OrderStatus.DELIVERED || existing.status === OrderStatus.CANCELLED) throw new BadRequestException('Order already delivered')
+
     existing.status = updateOrderDto.status;
 
     await this.ordersRepository.saveOrder(existing); // transaction
@@ -177,10 +176,6 @@ export class OrdersService {
 
     if ((existing.status !== OrderStatus.PENDING) && (existing.status !== OrderStatus.PROCESSING)) throw new BadRequestException('Order cannot be cancelled now.')
 
-    existing.status = OrderStatus.CANCELLED;
-
-    await this.ordersRepository.saveOrder(existing); // transaction
-
     // INCREASE THE PRODUCT STOCK
     for (const orderItem of existing.orderItems) {
       const product = orderItem.product;
@@ -190,6 +185,10 @@ export class OrdersService {
     }
 
     // CREATE CANCELED ORDER
+    existing.status = OrderStatus.CANCELLED;
+
+    await this.ordersRepository.saveOrder(existing); // transaction
+
     const canceledOrder = this.canceledOrdersRepo.create({
       order: existing,
       reason: cancelOrderDto.reason,

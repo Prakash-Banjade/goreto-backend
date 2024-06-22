@@ -11,7 +11,7 @@ export class PaymentsRepository extends BaseRepository {
         super(dataSource, req);
     }
 
-    async savePayment(user: Payment) {
-        return await this.getRepository<Payment>(Payment).save(user);
+    async savePayment(payment: Payment) {
+        return await this.getRepository<Payment>(Payment).save(payment);
     }
 }

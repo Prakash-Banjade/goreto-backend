@@ -1,6 +1,7 @@
-import { IsArray, IsOptional, IsUUID, ValidateNested } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsUUID, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { PaymentMethod } from 'src/core/types/global.types';
 
 // export class CreateOrderItemDto {
 //     @ApiProperty({ type: String, description: 'Product slug' })
@@ -31,4 +32,8 @@ export class CreateOrderDto {
     @ApiProperty({ type: [String], format: 'uuid', isArray: true, description: 'Cart items Ids' })
     @IsUUID('all', { each: true })
     cartItemIds: string[]
+
+    @ApiProperty({ type: 'enum', enum: PaymentMethod, description: 'Payment method' })
+    @IsEnum(PaymentMethod)
+    paymentMethod: PaymentMethod;
 }
