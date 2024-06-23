@@ -96,10 +96,10 @@ import { ConfigModule } from '@nestjs/config';
       provide: APP_GUARD,
       useClass: ThrottlerGuard, // global rate limiting, but can be overriden in route level
     },
-    // {
-    //   provide: APP_INTERCEPTOR,
-    //   useClass: CacheInterceptor, // global caching, only get requests will be cached
-    // },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CacheInterceptor, // global caching, only get requests will be cached
+    },
   ],
 })
 export class AppModule { }
