@@ -20,6 +20,9 @@ export class Product extends BaseEntity {
     @Column({ type: 'longtext' })
     description: string
 
+    @Column({ type: 'simple-array' })
+    productOptions: string[]
+
     @Column({ type: 'real', precision: 10, scale: 2 })
     price: number
 
