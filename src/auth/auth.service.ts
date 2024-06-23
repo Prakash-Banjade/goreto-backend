@@ -3,6 +3,8 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -20,6 +22,9 @@ import { UsersRepository } from 'src/users/repository/user.repository';
 import { CartsRepository } from 'src/carts/repository/carts.repository';
 import { AccountsRepository } from 'src/accounts/repository/account.repository';
 import { Cart } from 'src/carts/entities/cart.entity';
+import crypto from 'crypto'
+import { PasswordChangeRequest } from './entities/password-change-request.entity';
+import { MailService } from 'src/mail/mail.service';
 require('dotenv').config();
 
 @Injectable()
@@ -32,6 +37,8 @@ export class AuthService {
     private userRepository: UsersRepository,
     private cartsRepository: CartsRepository,
     private accountRepository: AccountsRepository,
+    @InjectRepository(PasswordChangeRequest) private passwordChangeRequestRepo: Repository<PasswordChangeRequest>,
+    private mailService: MailService,
   ) { }
 
   async signIn(signInDto: SignInDto) {
@@ -182,5 +189,82 @@ export class AuthService {
     // delete refresh token in db
     foundAccount.refresh_token = null;
     await this.accountsRepo.save(foundAccount);
+  }
+
+  async forgetPassword(email: string) {
+    const foundAccount = await this.accountsRepo.findOneBy({ email });
+    if (!foundAccount) throw new NotFoundException('Account not found');
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const hashedResetToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
+
+    // existing request
+    const existingRequest = await this.passwordChangeRequestRepo.findOneBy({ email });
+    if (existingRequest) {
+      await this.passwordChangeRequestRepo.remove(existingRequest);
+    }
+
+    const passwordChangeRequest = this.passwordChangeRequestRepo.create({
+      email: foundAccount.email,
+      hashedResetToken,
+    });
+    await this.passwordChangeRequestRepo.save(passwordChangeRequest);
+
+    const { previewUrl } = await this.mailService.sendResetPasswordLink(foundAccount, resetToken);
+    return {
+      message: 'Token is valid for 5 minutes',
+      resetToken,
+      previewUrl,
+    };
+  }
+
+  async resetPassword(password: string, providedResetToken: string) {
+    // hash the provided token to check in database
+    const hashedResetToken = crypto
+      .createHash('sha256')
+      .update(providedResetToken)
+      .digest('hex');
+
+    // Retrieve the hashed reset token from the database
+    const passwordChangeRequest = await this.passwordChangeRequestRepo.findOneBy({ hashedResetToken });
+
+    if (!passwordChangeRequest) {
+      throw new BadRequestException('Invalid reset token');
+    }
+
+    // Check if the reset token has expired
+    const now = new Date();
+    const resetTokenExpiration = new Date(passwordChangeRequest.createdAt);
+    resetTokenExpiration.setMinutes(resetTokenExpiration.getMinutes() + 5); // 5 minutes
+    if (now > resetTokenExpiration) {
+      await this.passwordChangeRequestRepo.remove(passwordChangeRequest);
+      throw new BadRequestException('Reset token has expired');
+    }
+
+    // retrieve the user from the database
+    const user = await this.accountsRepo.findOneBy({ email: passwordChangeRequest.email });
+    if (!user) throw new InternalServerErrorException('The requested User was not available in the database.');
+
+    // check if the new password is the same as the old one
+    const samePassword = await bcrypt.compare(password, user.password);
+    if (samePassword) {
+      throw new BadRequestException('New password cannot be the same as the old one');
+    }
+
+    // hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // update the user password
+    user.password = hashedPassword;
+    await this.accountsRepo.save(user);
+
+    // clear the reset token from the database
+    await this.passwordChangeRequestRepo.remove(passwordChangeRequest);
+
+    // Return success response
+    return { message: 'Password reset successful' };
   }
 }

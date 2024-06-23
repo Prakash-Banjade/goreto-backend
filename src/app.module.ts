@@ -29,9 +29,14 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
 import { StripeModule } from './stripe/stripe.module';
+import { MailModule } from './mail/mail.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     TypeOrmModule.forRoot(configService),
     NestjsFormDataModule.config({
       storage: FileSystemStoredFile,
@@ -74,6 +79,7 @@ import { StripeModule } from './stripe/stripe.module';
     ReviewsModule,
     OrdersModule,
     PaymentsModule,
+    MailModule
   ],
   controllers: [AppController],
   providers: [

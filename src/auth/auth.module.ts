@@ -9,11 +9,12 @@ import { AccountsModule } from 'src/accounts/accounts.module';
 import { UsersModule } from 'src/users/users.module';
 import { CartsModule } from 'src/carts/carts.module';
 import { Cart } from 'src/carts/entities/cart.entity';
+import { PasswordChangeRequest } from './entities/password-change-request.entity';
 require('dotenv').config();
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Account, User, Cart]),
+    TypeOrmModule.forFeature([Account, User, Cart, PasswordChangeRequest]),
     JwtModule.register({
       global: true,
       secret: process.env.ACCESS_TOKEN_SECRET!,
