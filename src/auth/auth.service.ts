@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   UnauthorizedException,
@@ -84,7 +85,7 @@ export class AuthService {
   async createRefreshToken(userId: string) {
     const tokenId = uuidv4();
     return await this.jwtService.signAsync(
-      { id: userId, tokenId: tokenId },
+      { userId, tokenId: tokenId },
       { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION!, secret: process.env.REFRESH_TOKEN_SECRET },
     );
   }
@@ -94,7 +95,7 @@ export class AuthService {
       email: registerDto.email,
     });
 
-    if (foundAccount) throw new BadRequestException('User with this email already exists');
+    if (foundAccount) throw new ConflictException('User with this email already exists');
 
     const newAccount = this.accountsRepo.create(registerDto);
 
