@@ -109,11 +109,17 @@ export class AuthService {
       email: registerDto.email,
     });
 
-    if (foundAccount) throw new ConflictException('User with this email already exists');
+    if (foundAccount && foundAccount.isVerified) throw new ConflictException('User with this email already exists');
 
-    const newAccount = this.accountsRepo.create(registerDto);
+    let account: Account;
 
-    const savedAccount = await this.accountRepository.insert(newAccount); // ensure transaction
+    if (foundAccount && !foundAccount.isVerified) { // same user can register multiple times without verifying, instead of creating new, use existing
+      const newAccount = Object.assign(foundAccount, registerDto);
+      account = await this.accountRepository.insert(newAccount);
+    } else {
+      const newAccount = this.accountsRepo.create(registerDto);
+      account = await this.accountRepository.insert(newAccount); // ensure transaction
+    }
 
     const otp = generateHashedOPT();
     const verificationToken = crypto.randomBytes(32).toString('hex');
@@ -123,14 +129,14 @@ export class AuthService {
       .digest('hex');
 
     const emailVerificationPending = this.emailVerificationPendingRepo.create({
-      email: savedAccount.email,
+      email: account.email,
       otp: String(otp),
       hashedVerificationToken,
     });
 
     await this.authRepository.saveVerificationEmailPending(emailVerificationPending);
 
-    const { previewUrl } = await this.mailService.sendEmailVerificationOtp(savedAccount, otp);
+    const { previewUrl } = await this.mailService.sendEmailVerificationOtp(account, otp);
 
     return {
       message: 'OTP is valid for 30 hours',
