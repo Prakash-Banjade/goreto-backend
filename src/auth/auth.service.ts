@@ -264,25 +264,18 @@ export class AuthService {
 
   async logout(
     refresh_token: string,
-    res: Response,
-    cookieOptions: CookieOptions,
   ) {
     // Is refresh token in db?
     const foundAccount = await this.accountsRepo.findOne({
-      where: {
-        refresh_token: Like(refresh_token),
-      }
+      where: { refresh_token: Like(`%${refresh_token}%`) },
     });
 
-    if (!foundAccount) {
-      res.clearCookie('refresh_token', cookieOptions);
-      res.sendStatus(204);
-      return;
+    if (foundAccount) {
+      // delete refresh token in db
+      foundAccount.refresh_token = foundAccount?.refresh_token.filter((rt) => rt !== refresh_token);;
+      await this.accountRepository.insert(foundAccount);
     }
 
-    // delete refresh token in db
-    foundAccount.refresh_token = foundAccount.refresh_token.filter((rt) => rt !== refresh_token);;
-    await this.accountRepository.insert(foundAccount);
   }
 
   async forgetPassword(email: string) {

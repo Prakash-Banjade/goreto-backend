@@ -81,7 +81,7 @@ export class AuthController {
         const refresh_token = req.cookies?.refresh_token;
         if (!refresh_token) return res.sendStatus(204)
 
-        await this.authService.logout(refresh_token, res, this.cookieOptions);
+        await this.authService.logout(refresh_token);
 
         res.clearCookie('refresh_token', this.cookieOptions);
         return;
