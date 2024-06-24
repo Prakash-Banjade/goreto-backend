@@ -11,22 +11,22 @@ export class MailService {
         private readonly configService: ConfigService
     ) { }
 
-    async sendUserCredentials(account: Account, password: string) {
+    async sendEmailVerificationOtp(account: Account, otp: number) {
         const result = await this.mailerService.sendMail({
             to: account.email,
-            subject: 'Welcome to Nepal Red Cross ! Confirm your Email',
-            template: './sendUserCredentials', // `.hbs` extension is appended automatically
+            subject: 'Email verification',
+            template: './sendEmailVerificationOtp', // `.hbs` extension is appended automatically
             context: { // ✏️ filling curly brackets with content
                 name: account.firstName + ' ' + account.lastName,
-                email: account.email,
-                password,
+                otp: otp
             },
         });
 
         const previewUrl = nodemailer.getTestMessageUrl(result);
         console.log('Preview URL:', previewUrl);
 
-        return result;
+        return { result, previewUrl };
+
     }
 
     async sendResetPasswordLink(account: Account, resetToken: string) {

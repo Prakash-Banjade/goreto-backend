@@ -25,10 +25,13 @@ export class Account extends BaseEntity {
     @Column({ type: 'varchar', nullable: true })
     image: string;
 
-    @Column({ type: 'varchar', nullable: true })
+    @Column({ type: 'text', nullable: true })
     refresh_token: string;
 
-    @OneToOne(() => User, user => user.account, { onDelete: 'CASCADE' })
+    @Column({ type: 'boolean', default: false })
+    isVerified: boolean = false;
+
+    @OneToOne(() => User, user => user.account, { onDelete: 'CASCADE', nullable: true })
     @JoinColumn()
     user: User
 

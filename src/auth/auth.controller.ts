@@ -10,6 +10,7 @@ import { FileSystemStoredFile, FormDataRequest } from 'nestjs-form-data';
 import { PasswordChangeRequestDto } from './dto/password-change-req.dto';
 import { Throttle } from '@nestjs/throttler';
 import { ResetPasswordDto } from './dto/resetPassword.dto';
+import { EmailVerificationDto } from './dto/email-verification.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -59,6 +60,15 @@ export class AuthController {
     @UseInterceptors(TransactionInterceptor)
     async register(@Body() registerDto: RegisterDto) {
         return await this.authService.register(registerDto);
+    }
+
+    @Public()
+    @Post('verifyEmail')
+    @ApiConsumes('multipart/form-data')
+    @FormDataRequest({ storage: FileSystemStoredFile })
+    @UseInterceptors(TransactionInterceptor)
+    async verifyEmail(@Body() emailVerificationDto: EmailVerificationDto) {
+        return await this.authService.verifyEmail(emailVerificationDto);
     }
 
     @Post('logout')

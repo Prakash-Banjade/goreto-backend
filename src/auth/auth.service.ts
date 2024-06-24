@@ -25,6 +25,10 @@ import { Cart } from 'src/carts/entities/cart.entity';
 import crypto from 'crypto'
 import { PasswordChangeRequest } from './entities/password-change-request.entity';
 import { MailService } from 'src/mail/mail.service';
+import { EmailVerificationPending } from './entities/email-verification-pending.entity';
+import { generateHashedOPT } from 'src/core/utils/generateOPT';
+import { AuthRepository } from './repository/auth.repository';
+import { EmailVerificationDto } from './dto/email-verification.dto';
 require('dotenv').config();
 
 @Injectable()
@@ -37,7 +41,9 @@ export class AuthService {
     private userRepository: UsersRepository,
     private cartsRepository: CartsRepository,
     private accountRepository: AccountsRepository,
+    private authRepository: AuthRepository,
     @InjectRepository(PasswordChangeRequest) private passwordChangeRequestRepo: Repository<PasswordChangeRequest>,
+    @InjectRepository(EmailVerificationPending) private emailVerificationPendingRepo: Repository<EmailVerificationPending>,
     private mailService: MailService,
   ) { }
 
@@ -45,6 +51,7 @@ export class AuthService {
     const foundAccount = await this.accountsRepo.findOne({
       where: {
         email: signInDto.email,
+        isVerified: true,
       },
       relations: {
         user: true,
@@ -53,7 +60,7 @@ export class AuthService {
 
     if (!foundAccount)
       throw new UnauthorizedException(
-        'This email is not registered. Please register first.',
+        'This email is not registered or unverified',
       );
 
     const isPasswordValid = await bcrypt.compare(
@@ -108,6 +115,59 @@ export class AuthService {
 
     const savedAccount = await this.accountRepository.insert(newAccount); // ensure transaction
 
+    const otp = generateHashedOPT();
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const hashedVerificationToken = crypto
+      .createHash('sha256')
+      .update(verificationToken)
+      .digest('hex');
+
+    const emailVerificationPending = this.emailVerificationPendingRepo.create({
+      email: savedAccount.email,
+      otp: String(otp),
+      hashedVerificationToken,
+    });
+
+    await this.authRepository.saveVerificationEmailPending(emailVerificationPending);
+
+    const { previewUrl } = await this.mailService.sendEmailVerificationOtp(savedAccount, otp);
+
+    return {
+      message: 'OTP is valid for 30 hours',
+      verificationToken,
+      previewUrl,
+    }
+  }
+
+  async verifyEmail({ verificationToken: token, otp }: EmailVerificationDto) {
+    // CHECK IF TOKEN IS VALID
+    const hashedVerificationToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+    const foundRequest = await this.emailVerificationPendingRepo.findOneBy({ hashedVerificationToken });
+    if (!foundRequest) throw new BadRequestException('Invalid token');
+
+    // CHECK IF OTP IS VALID
+    const isOtpValid = bcrypt.compareSync(String(otp), foundRequest.otp);
+    if (!isOtpValid) throw new BadRequestException('Invalid OTP');
+
+    // CHECI IF TOKEN HAS EXPIRED
+    const now = new Date();
+    const otpExpiration = new Date(foundRequest.createdAt);
+    otpExpiration.setMinutes(otpExpiration.getMinutes() + 30); // 30 minutes
+    if (now > otpExpiration) {
+      await this.emailVerificationPendingRepo.remove(foundRequest); // remove from database
+      throw new BadRequestException('OTP has expired');
+    }
+
+    // GET ACCOUNT FROM DATABASE
+    const foundAccount = await this.accountsRepo.findOneBy({ email: foundRequest.email });
+    if (!foundAccount) throw new NotFoundException('Account not found');
+
+    foundAccount.isVerified = true;
+    const savedAccount = await this.accountRepository.insert(foundAccount);
+
     const newUser = this.usersRepo.create({
       account: savedAccount,
     });
@@ -121,11 +181,10 @@ export class AuthService {
     await this.cartsRepository.createCart(cart);
 
     return {
-      message: 'User created',
-      user: {
-        id: newAccount.id,
-        email: newAccount.email,
-        name: newAccount.firstName + ' ' + newAccount.lastName,
+      message: 'Account Created Successfully',
+      account: {
+        email: savedAccount.email,
+        name: savedAccount.firstName + ' ' + savedAccount.lastName,
       },
     };
   }
