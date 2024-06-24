@@ -8,13 +8,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Like, Repository } from 'typeorm';
 import { SignInDto } from './dto/signIn.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
 import { v4 as uuidv4 } from 'uuid';
-import { CookieOptions, Response } from 'express';
+import { CookieOptions, Request, Response } from 'express';
 import { AuthUser } from 'src/core/types/global.types';
 import { Account } from 'src/accounts/entities/account.entity';
 import { User } from 'src/users/entities/user.entity';
@@ -47,7 +47,9 @@ export class AuthService {
     private mailService: MailService,
   ) { }
 
-  async signIn(signInDto: SignInDto) {
+  async signIn(signInDto: SignInDto, req: Request, res: Response, cookieOptions: CookieOptions) {
+    const refresh_token = req.cookies?.refresh_token;
+
     const foundAccount = await this.accountsRepo.findOne({
       where: {
         email: signInDto.email,
@@ -79,14 +81,16 @@ export class AuthService {
     };
 
     const access_token = await this.createAccessToken(payload);
+    const new_refresh_token = await this.createRefreshToken(payload);
 
-    const refresh_token = await this.createRefreshToken(foundAccount.id);
+    const newRefreshTokenArray = !refresh_token ? (foundAccount.refresh_token ?? []) : (foundAccount?.refresh_token?.filter((rt) => rt !== refresh_token) ?? [])
+    if (refresh_token) res.clearCookie('refresh_token', cookieOptions); // CLEAR COOKIE, BCZ A NEW ONE IS TO BE GENERATED
 
-    foundAccount.refresh_token = refresh_token;
+    foundAccount.refresh_token = [...newRefreshTokenArray, new_refresh_token];
 
     await this.accountsRepo.save(foundAccount);
 
-    return { access_token, refresh_token };
+    return { access_token, new_refresh_token };
   }
 
   async createAccessToken(payload: AuthUser) {
@@ -96,10 +100,10 @@ export class AuthService {
     });
   }
 
-  async createRefreshToken(userId: string) {
+  async createRefreshToken(payload: Pick<AuthUser, 'accountId'>) {
     const tokenId = uuidv4();
     return await this.jwtService.signAsync(
-      { userId, tokenId: tokenId },
+      { accountId: payload.accountId, tokenId: tokenId },
       { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION!, secret: process.env.REFRESH_TOKEN_SECRET },
     );
   }
@@ -195,26 +199,46 @@ export class AuthService {
     };
   }
 
-  async refresh(refresh_token: string) {
-    // verifying the refresh token
-    const decoded = await this.jwtService.verifyAsync(refresh_token, {
-      secret: process.env.REFRESH_TOKEN_SECRET,
-    });
-
-    if (!decoded) throw new ForbiddenException('Invalid token');
+  async refresh(refresh_token: string, res: Response, cookieOptions: CookieOptions) { // IMPLEMENTING REFRESH TOKEN RORATION WITH REUSE DETECTION
+    res.clearCookie('refresh_token', cookieOptions); // CLEAR COOKIE, BCZ A NEW ONE IS TO BE GENERATED
 
     // Is refresh token in db?
     const foundAccount = await this.accountsRepo.findOne({
-      where: {
-        refresh_token,
-        id: decoded.id,
-      },
+      where: { refresh_token: Like(`%${refresh_token}%`) },
       relations: {
         user: true
       }
     });
 
-    if (!foundAccount) throw new UnauthorizedException('Access Denied');
+    if (!foundAccount) {
+      // verifying the refresh token
+      const decoded = await this.jwtService.verifyAsync(refresh_token, {
+        secret: process.env.REFRESH_TOKEN_SECRET,
+      });
+      if (!decoded) throw new ForbiddenException(); // INVALID REFRESH TOKEN, NO PROBLEM, JUST LOGOUT AND LOGIN AGAIN
+
+      // DETECTED REUSE DETECTION: at this point, an account is hacked and we need to logout the account from all devices
+      const hackedAccount = await this.accountsRepo.findOne({
+        where: {
+          id: decoded.accountId,
+        }
+      })
+      hackedAccount.refresh_token = [];
+      await this.accountRepository.insert(hackedAccount);
+
+    }
+
+    // here the refresh token is valid and not reused
+    const newRefreshTokenArray = foundAccount?.refresh_token.filter((rt) => rt !== refresh_token) ?? [];
+
+    const decoded = await this.jwtService.verifyAsync(refresh_token, {
+      secret: process.env.REFRESH_TOKEN_SECRET,
+    });
+
+    if (!decoded) { // this means the refresh token may have been expired but is valid bcz invalid token are not saved in db
+      foundAccount.refresh_token = [...newRefreshTokenArray]
+      await this.accountRepository.insert(foundAccount);
+    }
 
     // create new access token & refresh token
     const payload: AuthUser = {
@@ -226,10 +250,10 @@ export class AuthService {
     };
 
     const new_access_token = await this.createAccessToken(payload);
-    const new_refresh_token = await this.createRefreshToken(foundAccount.id);
+    const new_refresh_token = await this.createRefreshToken(payload);
 
     // saving refresh_token with current user
-    foundAccount.refresh_token = new_refresh_token;
+    foundAccount.refresh_token = [...newRefreshTokenArray, new_refresh_token];
     await this.accountsRepo.save(foundAccount);
 
     return {
@@ -244,16 +268,21 @@ export class AuthService {
     cookieOptions: CookieOptions,
   ) {
     // Is refresh token in db?
-    const foundAccount = await this.accountsRepo.findOneBy({ refresh_token });
+    const foundAccount = await this.accountsRepo.findOne({
+      where: {
+        refresh_token: Like(refresh_token),
+      }
+    });
 
     if (!foundAccount) {
       res.clearCookie('refresh_token', cookieOptions);
-      return res.sendStatus(204);
+      res.sendStatus(204);
+      return;
     }
 
     // delete refresh token in db
-    foundAccount.refresh_token = null;
-    await this.accountsRepo.save(foundAccount);
+    foundAccount.refresh_token = foundAccount.refresh_token.filter((rt) => rt !== refresh_token);;
+    await this.accountRepository.insert(foundAccount);
   }
 
   async forgetPassword(email: string) {

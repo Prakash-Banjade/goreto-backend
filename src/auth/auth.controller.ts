@@ -19,8 +19,8 @@ export class AuthController {
 
     cookieOptions: CookieOptions = {
         httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'none',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 day
     }
 
@@ -30,9 +30,9 @@ export class AuthController {
     @ApiConsumes('multipart/form-data')
     @FormDataRequest({ storage: FileSystemStoredFile })
     async signIn(@Body() signInDto: SignInDto, @Res({ passthrough: true }) res: Response, @Req() req: Request) {
-        const { access_token, refresh_token } = await this.authService.signIn(signInDto);
+        const { access_token, new_refresh_token } = await this.authService.signIn(signInDto, req, res, this.cookieOptions);
 
-        res.cookie('refresh_token', refresh_token, this.cookieOptions);
+        res.cookie('refresh_token', new_refresh_token, this.cookieOptions);
 
         return { access_token };
     }
@@ -41,12 +41,13 @@ export class AuthController {
     @Post('refresh')
     @HttpCode(HttpStatus.OK)
     @ApiConsumes('multipart/form-data')
+    @UseInterceptors(TransactionInterceptor)
     @FormDataRequest({ storage: FileSystemStoredFile })
     async refreshToken(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
         const refresh_token = req.cookies?.refresh_token;
-        if (!refresh_token) throw new UnauthorizedException('No refresh token provided');
+        if (!refresh_token) throw new UnauthorizedException();
 
-        const { new_access_token, new_refresh_token } = await this.authService.refresh(refresh_token);
+        const { new_access_token, new_refresh_token } = await this.authService.refresh(refresh_token, res, this.cookieOptions);
 
         res.cookie('refresh_token', new_refresh_token, this.cookieOptions);
 
@@ -72,6 +73,7 @@ export class AuthController {
     }
 
     @Post('logout')
+    @UseInterceptors(TransactionInterceptor)
     @HttpCode(HttpStatus.NO_CONTENT)
     async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
         // on client also delete the access_token
