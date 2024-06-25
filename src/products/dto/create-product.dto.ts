@@ -55,9 +55,9 @@ export class CreateProductDto {
     @IsNotEmpty()
     categoryId: string;
     
-    @ApiProperty({ type: String, description: "Product cut type id" })
+    @ApiPropertyOptional({ type: String, description: "Product cut type id" })
     @IsUUID()
-    @IsNotEmpty()
+    @IsOptional()
     cutTypeId: string;
 
     @ApiPropertyOptional({ type: String, description: "Product preparation type id" })

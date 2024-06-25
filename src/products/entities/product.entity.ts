@@ -44,7 +44,7 @@ export class Product extends BaseEntity {
     @ManyToOne(() => Category, category => category.products)
     category: Category
 
-    @ManyToOne(() => CutType, cutType => cutType.products)
+    @ManyToOne(() => CutType, cutType => cutType.products, { nullable: true })
     cutType: CutType
 
     @ManyToOne(() => Preparation, preparation => preparation.products, { nullable: true })
