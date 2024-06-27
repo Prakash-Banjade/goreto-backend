@@ -100,7 +100,7 @@ export class AuthController {
     @Public()
     @Post('forgetPassword')
     @HttpCode(HttpStatus.OK)
-    @Throttle({ default: { limit: 1, ttl: 5000 } }) // override the default rate limit for password reset
+    // @Throttle({ default: { limit: 1, ttl: 5000 } }) // override the default rate limit for password reset
     forgetPassword(@Body() { email }: PasswordChangeRequestDto) {
         return this.authService.forgetPassword(email)
     }
@@ -108,7 +108,7 @@ export class AuthController {
     @Public()
     @Post('resetPassword')
     @HttpCode(HttpStatus.OK)
-    @Throttle({ default: { limit: 1, ttl: 5000 } }) // override the default rate limit for password reset
+    // @Throttle({ default: { limit: 1, ttl: 5000 } }) // override the default rate limit for password reset
     resetPassword(@Body() { password, confirmPassword, token }: ResetPasswordDto) {
         if (password !== confirmPassword) throw new BadRequestException('Passwords do not match');
 

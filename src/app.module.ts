@@ -46,25 +46,25 @@ import { ConfigModule } from '@nestjs/config';
       cleanupAfterSuccessHandle: false, // !important
     }),
     StripeModule.forRootAsync(),
-    ThrottlerModule.forRoot([{
-      ttl: 2000, // 1 requests per 2s
-      limit: 1,
-    }]),
+    // ThrottlerModule.forRoot([{
+    //   ttl: 2000, // 1 requests per 2s
+    //   limit: 1,
+    // }]),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'), // serve static files eg: localhost:3000/filename.png
     }),
-    CacheModule.register({
-      ttl: 5, // seconds
-      max: 10, // maximum number of items in cache
-      // @ts-ignore
-      store: async () => await redisStore({
-        // Store-specific configuration:
-        socket: {
-          host: process.env.REDIS_HOST,
-          port: +process.env.REDIS_PORT,
-        }
-      })
-    }),
+    // CacheModule.register({
+    //   ttl: 5, // seconds
+    //   max: 10, // maximum number of items in cache
+    //   // @ts-ignore
+    //   store: async () => await redisStore({
+    //     // Store-specific configuration:
+    //     socket: {
+    //       host: process.env.REDIS_HOST,
+    //       port: +process.env.REDIS_PORT,
+    //     }
+    //   })
+    // }),
     UsersModule,
     AuthModule,
     CaslModule,
@@ -92,14 +92,14 @@ import { ConfigModule } from '@nestjs/config';
       provide: APP_GUARD,
       useClass: AbilitiesGuard, // global ability guard
     },
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard, // global rate limiting, but can be overriden in route level
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor, // global caching, only get requests will be cached
-    },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: ThrottlerGuard, // global rate limiting, but can be overriden in route level
+    // },
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: CacheInterceptor, // global caching, only get requests will be cached
+    // },
   ],
 })
 export class AppModule { }
