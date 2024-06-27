@@ -42,8 +42,9 @@ export class UsersService {
       where: { id },
       relations: {
         cart: {
-          cartItems: true
-        }
+          cartItems: true,
+        },
+        account: true,
       }
     });
     if (!existingUser) throw new NotFoundException('User not found');
