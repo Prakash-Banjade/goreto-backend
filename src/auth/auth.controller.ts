@@ -53,9 +53,10 @@ export class AuthController {
         const refresh_token = req.cookies?.refresh_token;
         if (!refresh_token) throw new UnauthorizedException();
 
-        const { new_access_token, new_refresh_token } = await this.authService.refresh(refresh_token, res, this.cookieOptions);
+        const { new_access_token, new_refresh_token } = await this.authService.refresh(refresh_token, res, this.cookieOptions, this.refreshHeaderKey);
 
         res.cookie('refresh_token', new_refresh_token, this.cookieOptions);
+        res.set(this.refreshHeaderKey, `${new_refresh_token}`);
 
         return { access_token: new_access_token };
     }

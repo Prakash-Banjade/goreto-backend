@@ -199,8 +199,9 @@ export class AuthService {
     };
   }
 
-  async refresh(refresh_token: string, res: Response, cookieOptions: CookieOptions) { // IMPLEMENTING REFRESH TOKEN RORATION WITH REUSE DETECTION
+  async refresh(refresh_token: string, res: Response, cookieOptions: CookieOptions, refreshHeaderKey: string) { // IMPLEMENTING REFRESH TOKEN RORATION WITH REUSE DETECTION
     res.clearCookie('refresh_token', cookieOptions); // CLEAR COOKIE, BCZ A NEW ONE IS TO BE GENERATED
+    res.removeHeader(refreshHeaderKey);
 
     // Is refresh token in db?
     const foundAccount = await this.accountsRepo.findOne({
