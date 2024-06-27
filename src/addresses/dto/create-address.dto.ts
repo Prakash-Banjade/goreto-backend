@@ -15,17 +15,17 @@ export class CreateAddressDto {
     @IsOptional()
     address2?: string;
 
-    @ApiProperty({ type: String, description: 'City' })
-    @IsString()
-    @IsNotEmpty()
-    city!: string;
+    // @ApiProperty({ type: String, description: 'City' })
+    // @IsString()
+    // @IsNotEmpty()
+    // city!: string;
 
-    @ApiProperty({ type: 'enum', enum: Country, description: 'Country' })
-    @IsEnum(Country)
-    country!: Country;
+    // @ApiProperty({ type: 'enum', enum: Country, description: 'Country' })
+    // @IsEnum(Country)
+    // country!: Country;
 
-    @ApiProperty({ type: String, description: 'Province' })
-    @IsString()
-    @IsNotEmpty()
-    province!: string;
+    // @ApiProperty({ type: String, description: 'Province' })
+    // @IsString()
+    // @IsNotEmpty()
+    // province!: string;
 }

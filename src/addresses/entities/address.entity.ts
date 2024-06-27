@@ -12,13 +12,13 @@ export class Address extends BaseEntity {
     @Column({ type: 'varchar', nullable: true })
     address2?: string;
 
-    @Column({ type: 'varchar' })
-    city!: string;
+    // @Column({ type: 'varchar' })
+    // city!: string;
 
-    @Column({ type: 'enum', enum: Country })
-    country!: Country;
+    // @Column({ type: 'enum', enum: Country })
+    // country!: Country;
 
-    province!: string;
+    // province!: string;
 
     @OneToOne(() => User, (user) => user.address, { cascade: true, nullable: true, onDelete: 'CASCADE' })
     @JoinColumn()
