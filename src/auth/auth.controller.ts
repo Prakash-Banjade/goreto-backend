@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UnauthorizedException, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UnauthorizedException, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/signIn.dto';
 import { CookieOptions, Request, Response } from 'express';
@@ -11,6 +11,8 @@ import { PasswordChangeRequestDto } from './dto/password-change-req.dto';
 import { Throttle } from '@nestjs/throttler';
 import { ResetPasswordDto } from './dto/resetPassword.dto';
 import { EmailVerificationDto } from './dto/email-verification.dto';
+import { RefreshTokenGuard } from './guards/refresh-token.guard';
+require('dotenv').config();
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -24,6 +26,8 @@ export class AuthController {
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 day
     }
 
+    private readonly refreshHeaderKey = process.env.REFRESH_HEADER_KEY
+
     @Public()
     @HttpCode(HttpStatus.OK)
     @Post('login')
@@ -33,6 +37,7 @@ export class AuthController {
         const { access_token, new_refresh_token } = await this.authService.signIn(signInDto, req, res, this.cookieOptions);
 
         res.cookie('refresh_token', new_refresh_token, this.cookieOptions);
+        res.set(this.refreshHeaderKey, `${new_refresh_token}`);
 
         return { access_token };
     }
@@ -42,6 +47,7 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     @ApiConsumes('multipart/form-data')
     @UseInterceptors(TransactionInterceptor)
+    @UseGuards(RefreshTokenGuard)
     @FormDataRequest({ storage: FileSystemStoredFile })
     async refreshToken(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
         const refresh_token = req.cookies?.refresh_token;
@@ -72,8 +78,10 @@ export class AuthController {
         return await this.authService.verifyEmail(emailVerificationDto);
     }
 
+    @Public()
     @Post('logout')
     @UseInterceptors(TransactionInterceptor)
+    @UseGuards(RefreshTokenGuard)
     @HttpCode(HttpStatus.NO_CONTENT)
     async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
         // on client also delete the access_token
@@ -84,6 +92,7 @@ export class AuthController {
         await this.authService.logout(refresh_token);
 
         res.clearCookie('refresh_token', this.cookieOptions);
+        res.removeHeader(this.refreshHeaderKey);
         return;
     }
 
