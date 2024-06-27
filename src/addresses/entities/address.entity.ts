@@ -20,9 +20,6 @@ export class Address extends BaseEntity {
 
     province!: string;
 
-    @Column({ type: 'int', unsigned: true })
-    zipCode!: number;
-
     @OneToOne(() => User, (user) => user.address, { cascade: true, nullable: true, onDelete: 'CASCADE' })
     @JoinColumn()
     user?: User;

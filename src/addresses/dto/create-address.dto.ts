@@ -28,12 +28,4 @@ export class CreateAddressDto {
     @IsString()
     @IsNotEmpty()
     province!: string;
-
-    @ApiProperty({ type: Number, description: 'Zip Code' })
-    @IsNotEmpty()
-    @Transform(({ value }) => {
-        if (isNaN(parseInt(value))) throw new BadRequestException('Zip code must be a number');
-        return parseInt(value)
-    })
-    zipCode!: number;
 }

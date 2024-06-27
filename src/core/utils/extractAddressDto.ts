@@ -7,6 +7,5 @@ export function extractAddressDto<T extends CreateAddressDto>(dto: T) {
         city: dto.city,
         country: dto.country,
         province: dto.province,
-        zipCode: dto.zipCode
     }
 }
