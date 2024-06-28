@@ -7,6 +7,7 @@ import { setupSwagger } from './config/swagger.config';
 import helmet from 'helmet';
 import { SecurityHeadersMiddleware } from './core/middlewares/security_headers.middleware';
 import { setupMorgan } from './config/morgan.config';
+import { AppClusterService } from './app-cluster.service';
 const PORT = process.env.PORT || 3000;
 
 async function bootstrap() {
@@ -44,4 +45,5 @@ async function bootstrap() {
     console.log(`App running on port ${PORT}`)
   })
 }
-bootstrap();
+// bootstrap();
+AppClusterService.clusterize(bootstrap);
