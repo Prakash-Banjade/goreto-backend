@@ -30,23 +30,23 @@ export class CategoriesController {
   }
 
   @Public()
-  @Get(':id')
+  @Get(':slug')
   // @ChekcAbilities({ action: Action.READ, subject: 'all' })
-  findOne(@Param('id') id: string) {
-    return this.categoriesService.findOne(id);
+  findOne(@Param('slug') slug: string) {
+    return this.categoriesService.findOne(slug);
   }
 
-  @Patch(':id')
+  @Patch(':slug')
   @ApiConsumes('multipart/form-data')
   @ChekcAbilities({ action: Action.UPDATE, subject: 'all' })
   @FormDataRequest({ storage: FileSystemStoredFile })
-  update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
-    return this.categoriesService.update(id, updateCategoryDto);
+  update(@Param('slug') slug: string, @Body() updateCategoryDto: UpdateCategoryDto) {
+    return this.categoriesService.update(slug, updateCategoryDto);
   }
 
-  @Delete(':id')
+  @Delete(':slug')
   @ChekcAbilities({ action: Action.DELETE, subject: 'all' })
-  remove(@Param('id') id: string) {
-    return this.categoriesService.remove(id);
+  remove(@Param('slug') slug: string) {
+    return this.categoriesService.remove(slug);
   }
 }

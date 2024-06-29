@@ -151,7 +151,7 @@ export class ProductsService {
   }
 
   private async extractDependencies(productDto: CreateProductDto | UpdateProductDto, existing?: Product) {
-    const category = productDto.categoryId ? await this.categoryService.findOne(productDto.categoryId) : (existing?.category ?? null);
+    const category = productDto.categorySlug ? await this.categoryService.findOne(productDto.categorySlug) : (existing?.category ?? null);
     const preparation = productDto.preparationTypeId ? await this.preparationService.findOne(productDto.preparationTypeId) : (existing?.preparation ?? null);
     const cutType = productDto.cutTypeId ? await this.cutTypeService.findOne(productDto.cutTypeId) : (existing?.cutType ?? null);
 

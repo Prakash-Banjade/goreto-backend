@@ -51,14 +51,14 @@ export class CreateProductDto {
     otherImages?: FileSystemStoredFile[];
 
     @ApiProperty({ type: String, description: "Product category id" })
-    @IsUUID()
+    @IsString()
     @IsNotEmpty()
-    categoryId: string;
+    categorySlug: string;
     
     @ApiPropertyOptional({ type: String, description: "Product cut type id" })
     @IsUUID()
     @IsOptional()
-    cutTypeId: string;
+    cutTypeId?: string;
 
     @ApiPropertyOptional({ type: String, description: "Product preparation type id" })
     @IsUUID()
