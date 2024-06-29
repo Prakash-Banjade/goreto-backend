@@ -8,6 +8,7 @@ import { Preparation } from "src/product-filters/preparations/entities/preparati
 import { CartItem } from "src/cart-items/entities/cart-item.entity";
 import { Review } from "src/reviews/entities/review.entity";
 import { OrderItem } from "src/orders/entities/order-item.entity";
+import { SubCategory } from "src/categories/entities/sub-category.entity";
 
 @Entity()
 export class Product extends BaseEntity {
@@ -41,8 +42,8 @@ export class Product extends BaseEntity {
     @Column({ type: 'simple-array', nullable: true })
     otherImages?: string[]
 
-    @ManyToOne(() => Category, category => category.products)
-    category: Category
+    @ManyToOne(() => SubCategory, subCategory => subCategory.products, { onDelete: 'RESTRICT' })
+    subCategory: SubCategory
 
     @ManyToOne(() => CutType, cutType => cutType.products, { nullable: true })
     cutType: CutType

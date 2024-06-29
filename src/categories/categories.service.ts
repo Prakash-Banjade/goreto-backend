@@ -2,10 +2,12 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
-import { Repository } from 'typeorm';
+import { Brackets, ILike, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import getImageURL from 'src/core/utils/getImageURL';
 import { generateSlug } from 'src/core/utils/generateSlug';
+import { CategoryQueryDto } from './dto/category-query.dto';
+import paginatedData from 'src/core/utils/paginatedData';
 
 @Injectable()
 export class CategoriesService {
@@ -30,12 +32,26 @@ export class CategoriesService {
     return await this.categoriesRepo.save(newCategory);
   }
 
-  async findAll() {
-    return await this.categoriesRepo.find();
+  async findAll(queryDto: CategoryQueryDto) {
+    const queryBuilder = this.categoriesRepo.createQueryBuilder('category');
+
+    queryBuilder
+      .orderBy("category.createdAt", queryDto.order)
+      .leftJoinAndSelect("category.subCategories", "subCategory")
+      .andWhere(new Brackets(qb => {
+        qb.where([
+          { categoryName: ILike(`%${queryDto.search ?? ''}%`) },
+        ]);
+      }))
+
+    return paginatedData(queryDto, queryBuilder);
   }
 
   async findOne(slug: string) {
-    const existingCategory = await this.categoriesRepo.findOneBy({ slug });
+    const existingCategory = await this.categoriesRepo.findOne({
+      where: { slug },
+      relations: { subCategories: true }
+    });
     if (!existingCategory) throw new Error('Category not found');
 
     return existingCategory;

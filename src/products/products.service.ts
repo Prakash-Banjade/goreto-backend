@@ -13,12 +13,13 @@ import { Deleted } from 'src/core/dto/query.dto';
 import paginatedData from 'src/core/utils/paginatedData';
 import { FileSystemStoredFile } from 'nestjs-form-data';
 import { generateSlug } from 'src/core/utils/generateSlug';
+import { SubCategoriesService } from 'src/categories/sub-category.service';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(Product) private readonly productRepo: Repository<Product>,
-    private readonly categoryService: CategoriesService,
+    private readonly subCategoryService: SubCategoriesService,
     private readonly cutTypeService: CutTypesService,
     private readonly preparationService: PreparationsService
   ) { }
@@ -59,7 +60,7 @@ export class ProductsService {
       .take(queryDto.search ? undefined : queryDto.take)
       .withDeleted()
       .where({ deletedAt })
-      .leftJoinAndSelect("product.category", "category")
+      .leftJoinAndSelect("product.subCategory", "subCategory")
       .leftJoinAndSelect("product.discount", "discount")
       .leftJoinAndSelect("product.cutType", "cutType")
       .leftJoinAndSelect("product.preparation", "preparation")
@@ -82,7 +83,7 @@ export class ProductsService {
     const existing = await this.productRepo.findOne({
       where: { slug: Equal(slug) },
       relations: {
-        category: true,
+        subCategory: true,
         discount: true,
         cutType: true,
         preparation: true,
@@ -151,7 +152,7 @@ export class ProductsService {
   }
 
   private async extractDependencies(productDto: CreateProductDto | UpdateProductDto, existing?: Product) {
-    const category = productDto.categorySlug ? await this.categoryService.findOne(productDto.categorySlug) : (existing?.category ?? null);
+    const category = productDto.subCategorySlug ? await this.subCategoryService.findOne(productDto.subCategorySlug) : (existing?.subCategory ?? null);
     const preparation = productDto.preparationTypeId ? await this.preparationService.findOne(productDto.preparationTypeId) : (existing?.preparation ?? null);
     const cutType = productDto.cutTypeId ? await this.cutTypeService.findOne(productDto.cutTypeId) : (existing?.cutType ?? null);
 

@@ -31,7 +31,19 @@ export function setupSwagger(app: INestApplication): void {
         .build();
 
     const document = SwaggerModule.createDocument(app, config, {
-        include: [AuthModule, UsersModule, ProductsModule, CategoriesModule, CutTypesModule, PreparationsModule, ShippingAddressesModule, CartsModule, CartItemsModule, ReviewsModule, OrdersModule, PaymentsModule],
+        include: [
+            AuthModule,
+            UsersModule,
+            ProductsModule,
+            CategoriesModule,
+            CutTypesModule,
+            PreparationsModule,
+            ShippingAddressesModule,
+            CartsModule,
+            CartItemsModule,
+            ReviewsModule, OrdersModule,
+            PaymentsModule
+        ],
     });
 
     SwaggerModule.setup('docs', app, document, {

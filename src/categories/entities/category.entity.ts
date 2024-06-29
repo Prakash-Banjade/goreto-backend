@@ -1,6 +1,7 @@
 import { BaseEntity } from "src/core/entities/base.entity";
 import { Product } from "src/products/entities/product.entity";
 import { Column, Entity, OneToMany } from "typeorm";
+import { SubCategory } from "./sub-category.entity";
 
 @Entity()
 export class Category extends BaseEntity {
@@ -16,6 +17,6 @@ export class Category extends BaseEntity {
     @Column({ type: 'longtext' })
     description: string;
 
-    @OneToMany(() => Product, (product) => product.category, { nullable: true })
-    products: Product[]
+    @OneToMany(() => SubCategory, (subCategory) => subCategory.category, { nullable: true })
+    subCategories: Category[]
 }
