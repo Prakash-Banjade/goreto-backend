@@ -4,7 +4,6 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { Brackets, Equal, ILike, In, IsNull, Not, Or, Repository } from 'typeorm';
-import { CategoriesService } from 'src/categories/categories.service';
 import { CutTypesService } from 'src/product-filters/cut-types/cut-types.service';
 import { PreparationsService } from 'src/product-filters/preparations/preparations.service';
 import getImageURL from 'src/core/utils/getImageURL';
@@ -61,19 +60,20 @@ export class ProductsService {
       .withDeleted()
       .where({ deletedAt })
       .leftJoinAndSelect("product.subCategory", "subCategory")
+      .leftJoinAndSelect("subCategory.category", "category")
       .leftJoinAndSelect("product.discount", "discount")
       .leftJoinAndSelect("product.cutType", "cutType")
       .leftJoinAndSelect("product.preparation", "preparation")
-      .leftJoinAndSelect("product.reviews", "reviews")
       .andWhere(new Brackets(qb => {
         qb.where([
           { productName: ILike(`%${queryDto.search ?? ''}%`) },
         ]);
-        // queryDto.gender && qb.andWhere({ gender: queryDto.gender });
-
-      }))
-      .andWhere(new Brackets(qb => {
-        // if (queryDto.country) qb.andWhere("LOWER(address.country) LIKE LOWER(:country)", { country: `%${queryDto.country ?? ''}%` });
+        queryDto.categorySlug && qb.andWhere("category.slug = :categorySlug", { categorySlug: `%${queryDto.categorySlug ?? ''}%` });
+        queryDto.subCategorySlug && qb.andWhere("subCategory.slug = :subCategorySlug", { subCategorySlug: `%${queryDto.subCategorySlug ?? ''}%` });
+        queryDto.priceFrom && qb.andWhere("product.price >= :priceFrom", { priceFrom: queryDto.priceFrom });
+        queryDto.priceTo && qb.andWhere("product.price <= :priceTo", { priceTo: queryDto.priceTo });
+        queryDto.ratingFrom && qb.andWhere("product.rating >= :ratingFrom", { ratingFrom: queryDto.ratingFrom });
+        queryDto.ratingTo && qb.andWhere("product.rating <= :ratingTo", { ratingTo: queryDto.ratingTo });
       }))
 
     return paginatedData(queryDto, queryBuilder);
@@ -87,7 +87,6 @@ export class ProductsService {
         discount: true,
         cutType: true,
         preparation: true,
-        reviews: true
       }
     });
 
