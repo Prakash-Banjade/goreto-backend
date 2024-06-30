@@ -38,6 +38,11 @@ export class CreateProductDto {
     })
     stockQuantity: number;
 
+    @ApiProperty({ type: [String], description: "Product options", example: ["500g", "1kg", "2kg"] })
+    @IsString({ each: true })
+    @IsNotEmpty({ each: true })
+    productOptions: string[]
+
     @ApiProperty({ type: String, format: "binary", description: "Product cover image" })
     @IsFile({ message: 'Invalid type for cover image. Cover image must be a file', always: true })
     @HasMimeType(['image/jpeg', 'image/png', 'image/webp'], { message: 'Invalid type for cover image. Cover image must be a jpeg or png or webp' })
@@ -54,7 +59,7 @@ export class CreateProductDto {
     @IsString()
     @IsNotEmpty()
     subCategorySlug: string;
-    
+
     @ApiPropertyOptional({ type: String, description: "Product cut type id" })
     @IsUUID()
     @IsOptional()
