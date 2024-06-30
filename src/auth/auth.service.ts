@@ -118,8 +118,13 @@ export class AuthService {
     let account: Account;
 
     if (foundAccount && !foundAccount.isVerified) { // same user can register multiple times without verifying, instead of creating new, use existing
-      const newAccount = Object.assign(foundAccount, registerDto);
+      const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+      const newAccount = Object.assign(foundAccount, {
+        ...registerDto,
+        password: hashedPassword,
+      });
       account = await this.accountRepository.insert(newAccount);
+      await this.authRepository.removeVerificationEmailPending(foundAccount.email); // remove email_verification_pending if exist
     } else {
       const newAccount = this.accountsRepo.create(registerDto);
       account = await this.accountRepository.insert(newAccount); // ensure transaction
@@ -167,7 +172,7 @@ export class AuthService {
     const otpExpiration = new Date(foundRequest.createdAt);
     otpExpiration.setMinutes(otpExpiration.getMinutes() + 30); // 30 minutes
     if (now > otpExpiration) {
-      await this.emailVerificationPendingRepo.remove(foundRequest); // remove from database
+      await this.authRepository.removeVerificationEmailPending(foundRequest.email); // remove from database
       throw new BadRequestException('OTP has expired');
     }
 
@@ -189,6 +194,7 @@ export class AuthService {
     })
 
     await this.cartsRepository.createCart(cart);
+    await this.authRepository.removeVerificationEmailPending(foundRequest.email); // remove from database
 
     return {
       message: 'Account Created Successfully',

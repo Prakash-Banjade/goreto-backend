@@ -14,4 +14,8 @@ export class AuthRepository extends BaseRepository {
     async saveVerificationEmailPending(emailVerificationPending: EmailVerificationPending) {
         return await this.getRepository<EmailVerificationPending>(EmailVerificationPending).save(emailVerificationPending);
     }
+
+    async removeVerificationEmailPending(email: string) {
+        return await this.getRepository<EmailVerificationPending>(EmailVerificationPending).delete({ email });
+    }
 }
