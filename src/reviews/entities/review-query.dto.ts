@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNumber, IsOptional, Max, Min } from "class-validator";
+import { IsNumber, IsOptional, IsString, Max, Min } from "class-validator";
 import { QueryDto } from "src/core/dto/query.dto";
 
 export class ReviewQueryDto extends QueryDto {
@@ -10,6 +10,10 @@ export class ReviewQueryDto extends QueryDto {
     @IsOptional()
     rating?: number;
 
+    @ApiProperty({ type: String, description: 'Product Name' })
+    @IsString()
+    @IsOptional()
+    productName?: string
 
     @ApiProperty({ type: Number, description: 'Product Rating from' })
     @IsNumber()

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseInterceptors } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
@@ -9,6 +9,7 @@ import { CurrentUser } from 'src/core/decorators/currentuser.decorator';
 import { ChekcAbilities } from 'src/core/decorators/abilities.decorator';
 import { User } from 'src/users/entities/user.entity';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { TransactionInterceptor } from 'src/core/interceptors/transaction.interceptor';
 
 @ApiBearerAuth()
 @ApiTags('Reviews')
