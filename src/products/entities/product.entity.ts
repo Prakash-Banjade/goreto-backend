@@ -60,6 +60,9 @@ export class Product extends BaseEntity {
     @OneToMany(() => Review, review => review.product, { nullable: true })
     reviews: Review[]
 
+    @Column({ type: 'real', default: 0 })
+    rating: number
+
     @BeforeUpdate()
     @BeforeInsert()
     calculateCurrentPrice() {
