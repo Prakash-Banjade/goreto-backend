@@ -34,12 +34,12 @@ export class AuthController {
     @ApiConsumes('multipart/form-data')
     @FormDataRequest({ storage: FileSystemStoredFile })
     async signIn(@Body() signInDto: SignInDto, @Res({ passthrough: true }) res: Response, @Req() req: Request) {
-        const { access_token, new_refresh_token } = await this.authService.signIn(signInDto, req, res, this.cookieOptions);
+        const { access_token, new_refresh_token, payload } = await this.authService.signIn(signInDto, req, res, this.cookieOptions);
 
         res.cookie('refresh_token', new_refresh_token, this.cookieOptions);
         res.set(this.refreshHeaderKey, `${new_refresh_token}`);
 
-        return { access_token };
+        return { access_token, refreshToken: new_refresh_token, payload };
     }
 
     @Public()
@@ -53,12 +53,12 @@ export class AuthController {
         const refresh_token = req.cookies?.refresh_token;
         if (!refresh_token) throw new UnauthorizedException();
 
-        const { new_access_token, new_refresh_token } = await this.authService.refresh(refresh_token, res, this.cookieOptions, this.refreshHeaderKey);
+        const { new_access_token, new_refresh_token, payload } = await this.authService.refresh(refresh_token, res, this.cookieOptions, this.refreshHeaderKey);
 
         res.cookie('refresh_token', new_refresh_token, this.cookieOptions);
         res.set(this.refreshHeaderKey, `${new_refresh_token}`);
 
-        return { access_token: new_access_token };
+        return { access_token: new_access_token, refresh_token: new_refresh_token, payload };
     }
 
     @Public()

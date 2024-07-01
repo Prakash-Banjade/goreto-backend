@@ -90,7 +90,7 @@ export class AuthService {
 
     await this.accountsRepo.save(foundAccount);
 
-    return { access_token, new_refresh_token };
+    return { access_token, new_refresh_token, payload };
   }
 
   async createAccessToken(payload: AuthUser) {
@@ -266,6 +266,7 @@ export class AuthService {
     return {
       new_access_token,
       new_refresh_token,
+      payload,
     };
   }
 
