@@ -1,5 +1,5 @@
 import { BadRequestException } from "@nestjs/common";
-import { ApiPropertyOptional } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import { IsOptional, IsString } from "class-validator";
 import { QueryDto } from "src/core/dto/query.dto";
@@ -49,4 +49,12 @@ export class ProductQueryDto extends QueryDto {
     })
     @IsOptional()
     ratingTo?: number = 5;
+
+    @ApiPropertyOptional({ type: String, description: 'Stock count' })
+    @Transform(({ value }) => {
+        if (isNaN(Number(value))) throw new BadRequestException('Invalid product count');
+        return Number(value);
+    })
+    @IsOptional()
+    stockQuantity?: number
 }
