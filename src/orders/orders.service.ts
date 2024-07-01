@@ -103,6 +103,8 @@ export class OrdersService {
     // PROCESS PAYMENT
     const paymentResult = await this.paymentService.create(savedOrder, createOrderDto.paymentMethod);
 
+    // TODO: INCREASE PRODUCT SOLD COUNT AFTER SUCCESSFUL PAYMENT
+
     return paymentResult;
   }
 
