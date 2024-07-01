@@ -3,12 +3,16 @@ import { OrderStatus } from "src/core/types/global.types";
 import { Payment } from "src/payments/entities/payment.entity";
 import { ShippingAddress } from "src/shipping-addresses/entities/shipping-address.entity";
 import { User } from "src/users/entities/user.entity";
-import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne } from "typeorm";
+import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne } from "typeorm";
 import { OrderItem } from "./order-item.entity";
 import { CanceledOrder } from "./canceled-order.entity";
+import { generateTrackingNumber } from "src/core/utils/generateTrackingNumber";
 
 @Entity()
 export class Order extends BaseEntity {
+    @Column({ type: 'varchar' })
+    trackingNumber: string;
+
     @ManyToOne(() => User, user => user.orders, { onDelete: 'CASCADE' })
     user: User
 
@@ -39,4 +43,9 @@ export class Order extends BaseEntity {
     @OneToOne(() => CanceledOrder, canceledOrder => canceledOrder.order, { onDelete: 'RESTRICT', nullable: true })
     @JoinColumn()
     canceledOrder: CanceledOrder
+
+    @BeforeInsert()
+    generateTrackingNumber() {
+        this.trackingNumber = generateTrackingNumber()
+    }
 }
