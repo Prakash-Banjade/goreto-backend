@@ -24,6 +24,11 @@ export class CreateProductDto {
     })
     price: number;
 
+    @ApiProperty({ type: String, description: "Price is per", example: "500g or 1kg" })
+    @IsString()
+    @IsNotEmpty()
+    perUnit: string;
+
     @ApiPropertyOptional({ type: String, description: "Product price unit", default: CONSTANTS.defaultProductPriceUnit })
     @IsString()
     @IsNotEmpty()

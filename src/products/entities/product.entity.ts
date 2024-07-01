@@ -27,6 +27,9 @@ export class Product extends BaseEntity {
     @Column({ type: 'real', precision: 10, scale: 2 })
     price: number
 
+    @Column({ type: 'varchar' })
+    perUnit: string
+
     @Column({ type: 'varchar', default: CONSTANTS.defaultProductPriceUnit })
     priceUnit: string
 
@@ -71,4 +74,7 @@ export class Product extends BaseEntity {
 
     @OneToMany(() => OrderItem, orderItem => orderItem.product, { nullable: true })
     orderItems: OrderItem[]
+
+    @Column({ type: 'int', default: 0 })
+    soldCount: number
 }
