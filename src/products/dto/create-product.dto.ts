@@ -17,6 +17,11 @@ export class CreateProductDto {
     @IsNotEmpty()
     description: string;
 
+    @ApiProperty({ type: String, description: "Product slug" })
+    @IsString()
+    @IsOptional()
+    slug: string;
+
     // @ApiProperty({ type: Number, description: "Product stock quantity" })
     // @IsNotEmpty()
     // @Transform(({ value }) => {

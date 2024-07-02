@@ -1,7 +1,7 @@
 import { BaseEntity } from "src/core/entities/base.entity";
-import { Product } from "src/products/entities/product.entity";
-import { Column, Entity, OneToMany } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany } from "typeorm";
 import { SubCategory } from "./sub-category.entity";
+import { generateSlug } from "src/core/utils/generateSlug";
 
 @Entity()
 export class Category extends BaseEntity {
@@ -10,6 +10,12 @@ export class Category extends BaseEntity {
 
     @Column({ type: 'text' })
     slug: string;
+
+    @BeforeInsert()
+    @BeforeUpdate()
+    generateSlug() {
+        if (!this.slug) this.slug = generateSlug(this.categoryName, false);
+    }
 
     @Column({ type: 'varchar' })
     coverImage: string;

@@ -24,7 +24,7 @@ export class Product extends BaseEntity {
     @BeforeInsert()
     @BeforeUpdate()
     generateSlug() {
-        this.slug = generateSlug(this.productName);
+        if (!this.slug) this.slug = generateSlug(this.productName);
     }
 
     @Column({ type: 'longtext' })
