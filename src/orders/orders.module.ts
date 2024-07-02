@@ -12,6 +12,8 @@ import { OrdersRepository } from './repository/order.repository';
 import { OrderItemsRepository } from './repository/order-item.repository';
 import { PaymentsModule } from 'src/payments/payments.module';
 import { CanceledOrder } from './entities/canceled-order.entity';
+import { SkusModule } from 'src/products/skus/skus.module';
+import { Sku } from 'src/products/skus/entities/sku.entity';
 
 @Module({
   imports: [
@@ -21,8 +23,10 @@ import { CanceledOrder } from './entities/canceled-order.entity';
       Product,
       Payment,
       CanceledOrder,
+      Sku
     ]),
     CartsModule,
+    SkusModule,
     PaymentsModule,
     ShippingAddressesModule,
   ],

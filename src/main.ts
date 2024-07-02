@@ -45,5 +45,5 @@ async function bootstrap() {
     console.log(`App running on port ${PORT}`)
   })
 }
-// bootstrap();
-AppClusterService.clusterize(bootstrap);
+bootstrap();
+// AppClusterService.clusterize(bootstrap);

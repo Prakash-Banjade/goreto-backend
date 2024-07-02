@@ -3,25 +3,33 @@ import { Brackets, IsNull, Not, Or, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Discount } from './entities/discount.entity';
 import { CreateDiscountDto, UpdateDiscountDto } from './dto/discount.dto';
-import { ProductsService } from './products.service';
 import { Deleted, QueryDto } from 'src/core/dto/query.dto';
 import paginatedData from 'src/core/utils/paginatedData';
+import { SkusService } from './skus/skus.service';
+import { Sku } from './skus/entities/sku.entity';
+import { DiscountRepository } from './repository/discount.repository';
 
 @Injectable()
 export class DiscountsService {
     constructor(
         @InjectRepository(Discount) private readonly discountsRepo: Repository<Discount>,
-        private readonly productService: ProductsService
+        @InjectRepository(Sku) private readonly skuRepo: Repository<Sku>,
+        private readonly skuService: SkusService,
+        private readonly discountRepository: DiscountRepository,
     ) { }
 
     async create(createDiscountDto: CreateDiscountDto) {
-        const product = await this.productService.findOne(createDiscountDto.productId);
+        const sku = await this.skuService.findOne(createDiscountDto.skuId);
 
         const newDiscountType = this.discountsRepo.create({
             ...createDiscountDto,
-            product,
+            sku,
         });
-        return await this.discountsRepo.save(newDiscountType);
+
+        sku.currentPrice = sku.price * (1 - createDiscountDto.discountPercentage / 100);
+        await this.discountRepository.saveSku(sku);
+
+        return await this.discountRepository.saveDiscount(newDiscountType);
     }
 
     async findAll(queryDto: QueryDto) {
@@ -49,7 +57,7 @@ export class DiscountsService {
     }
 
     async findOne(id: string) {
-        const existingDiscountType = await this.discountsRepo.findOneBy({ id });
+        const existingDiscountType = await this.discountsRepo.findOne({ where: { id }, relations: { sku: true } });
         if (!existingDiscountType) throw new Error('Discount type not found');
 
         return existingDiscountType;
@@ -57,13 +65,19 @@ export class DiscountsService {
 
     async update(id: string, updateDiscountDto: UpdateDiscountDto) {
         const existingDiscountType = await this.findOne(id);
-        const product = updateDiscountDto.productId ? await this.productService.findOne(updateDiscountDto.productId) : existingDiscountType.product;
+        const sku = updateDiscountDto.skuId ? await this.skuService.findOne(updateDiscountDto.skuId) : existingDiscountType.sku;
+
+        if (updateDiscountDto.discountPercentage && updateDiscountDto.discountPercentage !== existingDiscountType.discountPercentage) {
+            sku.currentPrice = sku.price * (1 - updateDiscountDto.discountPercentage / 100);
+            await this.discountRepository.saveSku(sku);
+        }
 
         Object.assign(existingDiscountType, {
             ...updateDiscountDto,
-            product,
+            sku,
         });
-        return await this.discountsRepo.save(existingDiscountType);
+
+        return await this.discountRepository.saveDiscount(existingDiscountType);
     }
 
     async remove(id: string) {

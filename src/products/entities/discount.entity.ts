@@ -1,12 +1,12 @@
 import { BaseEntity } from "src/core/entities/base.entity";
 import { Column, Entity, JoinColumn, OneToOne } from "typeorm";
-import { Product } from "./product.entity";
+import { Sku } from "../skus/entities/sku.entity";
 
 @Entity()
 export class Discount extends BaseEntity {
-    @OneToOne(() => Product, product => product.discount, { onDelete: 'CASCADE' })
+    @OneToOne(() => Sku, sku => sku.discount, { onDelete: 'CASCADE' })
     @JoinColumn()
-    product: Product;
+    sku: Sku;
 
     @Column({ type: 'real' })
     discountPercentage: number;

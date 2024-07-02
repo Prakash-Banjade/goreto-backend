@@ -1,13 +1,18 @@
 import { BadRequestException } from "@nestjs/common";
 import { ApiProperty, PartialType } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
-import { IsDateString, IsNotEmpty, IsString, IsUUID, Max, Min } from "class-validator";
+import { IsDateString, IsNotEmpty, IsUUID, Max, Min } from "class-validator";
 
 export class CreateDiscountDto {
-    @ApiProperty({ type: String, description: 'Product slug' })
-    @IsString()
+    // @ApiProperty({ type: String, description: 'Product slug' })
+    // @IsString()
+    // @IsNotEmpty()
+    // productId: string;
+
+    @ApiProperty({ type: String, description: 'Product sku id' })
+    @IsUUID()
     @IsNotEmpty()
-    productId: string;
+    skuId: string;
 
     @ApiProperty({ type: Number, description: 'Discount percentage' })
     @IsNotEmpty()

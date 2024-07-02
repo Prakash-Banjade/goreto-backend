@@ -10,6 +10,13 @@ import { Discount } from './entities/discount.entity';
 import { DiscountsController } from './discounts.controller';
 import { DiscountsService } from './discounts.service';
 import { ProductsRepository } from './repository/product.repository';
+import { AttributesModule } from './attributes/attributes.module';
+import { AttributeOptionsModule } from './attribute-options/attribute-options.module';
+import { SkusModule } from './skus/skus.module';
+import { AttributeOptionSkusModule } from './attribute-option-skus/attribute-option-skus.module';
+import { Sku } from './skus/entities/sku.entity';
+import { AttributeOptionSku } from './attribute-option-skus/entities/attribute-option-skus.entity';
+import { DiscountRepository } from './repository/discount.repository';
 
 @Global()
 @Module({
@@ -17,13 +24,19 @@ import { ProductsRepository } from './repository/product.repository';
     TypeOrmModule.forFeature([
       Product,
       Discount,
+      Sku,
+      AttributeOptionSku
     ]),
     CategoriesModule,
     CutTypesModule,
     PreparationsModule,
+    AttributesModule,
+    AttributeOptionsModule,
+    SkusModule,
+    AttributeOptionSkusModule,
   ],
   controllers: [ProductsController, DiscountsController],
-  providers: [ProductsService, DiscountsService, ProductsRepository],
+  providers: [ProductsService, DiscountsService, ProductsRepository, DiscountRepository],
   exports: [ProductsService, ProductsRepository],
 })
 export class ProductsModule { }

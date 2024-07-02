@@ -34,7 +34,14 @@ export class ShippingAddressesService {
       address,
     });
 
-    return this.shippingAddressRepo.save(shippingAddress);
+    await this.shippingAddressRepo.save(shippingAddress);
+    return {
+      message: 'Address created',
+      address: {
+        address1: address.address1,
+        address2: address.address2,
+      }
+    }
   }
 
   async findAll(currentUser: AuthUser) {

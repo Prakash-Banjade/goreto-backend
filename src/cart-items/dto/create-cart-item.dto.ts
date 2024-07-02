@@ -1,13 +1,18 @@
 import { BadRequestException } from "@nestjs/common";
 import { ApiProperty } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsNotEmpty, IsString, IsUUID } from "class-validator";
 
 export class CreateCartItemDto {
-    @ApiProperty({ type: String, description: 'Product slug' })
-    @IsString()
+    // @ApiProperty({ type: String, description: 'Product slug' })
+    // @IsString()
+    // @IsNotEmpty()
+    // productId: string; // product slug
+
+    @ApiProperty({ type: String, description: 'Product sku id' })
+    @IsUUID()
     @IsNotEmpty()
-    productId: string; // product slug
+    skuId: string;
 
     @ApiProperty({ type: Number, description: 'Quantity' })
     @Transform(({ value }) => {

@@ -13,6 +13,8 @@ import paginatedData from 'src/core/utils/paginatedData';
 import { FileSystemStoredFile } from 'nestjs-form-data';
 import { generateSlug } from 'src/core/utils/generateSlug';
 import { SubCategoriesService } from 'src/categories/sub-category.service';
+import { AttributeOptionSku } from './attribute-option-skus/entities/attribute-option-skus.entity';
+import { Sku } from './skus/entities/sku.entity';
 
 @Injectable()
 export class ProductsService {
@@ -20,7 +22,9 @@ export class ProductsService {
     @InjectRepository(Product) private readonly productRepo: Repository<Product>,
     private readonly subCategoryService: SubCategoriesService,
     private readonly cutTypeService: CutTypesService,
-    private readonly preparationService: PreparationsService
+    private readonly preparationService: PreparationsService,
+    @InjectRepository(Sku) private readonly skuRepo: Repository<Sku>,
+    @InjectRepository(AttributeOptionSku) private readonly attributeOptionSkuRepo: Repository<AttributeOptionSku>
   ) { }
 
   async create(createProductDto: CreateProductDto) {
@@ -30,20 +34,11 @@ export class ProductsService {
     // evaluate coverImage
     const coverImage = getImageURL(createProductDto.coverImage);
 
-    // evaluate otherImages
-    let images: string[] = [];
-    if (createProductDto.otherImages) {
-      images = createProductDto.otherImages.map(image => getImageURL(image));
-    }
-
-    const slug = generateSlug(createProductDto.productName)
-
     const product = this.productRepo.create({
       ...createProductDto,
       ...dependencies,
       coverImage,
-      slug,
-      otherImages: images
+      // otherImages: images
     });
 
     return await this.productRepo.save(product);
@@ -61,17 +56,17 @@ export class ProductsService {
       .where({ deletedAt })
       .leftJoinAndSelect("product.subCategory", "subCategory")
       .leftJoinAndSelect("subCategory.category", "category")
-      .leftJoinAndSelect("product.discount", "discount")
       .leftJoinAndSelect("product.cutType", "cutType")
       .leftJoinAndSelect("product.preparation", "preparation")
+      .leftJoinAndSelect("product.skus", "sku")
       .andWhere(new Brackets(qb => {
         qb.where([
           { productName: ILike(`%${queryDto.search ?? ''}%`) },
         ]);
         queryDto.categorySlug && qb.andWhere("category.slug = :categorySlug", { categorySlug: `%${queryDto.categorySlug ?? ''}%` });
         queryDto.subCategorySlug && qb.andWhere("subCategory.slug = :subCategorySlug", { subCategorySlug: `%${queryDto.subCategorySlug ?? ''}%` });
-        queryDto.priceFrom && qb.andWhere("product.price >= :priceFrom", { priceFrom: queryDto.priceFrom });
-        queryDto.priceTo && qb.andWhere("product.price <= :priceTo", { priceTo: queryDto.priceTo });
+        // queryDto.priceFrom && qb.andWhere("product.price >= :priceFrom", { priceFrom: queryDto.priceFrom });
+        // queryDto.priceTo && qb.andWhere("product.price <= :priceTo", { priceTo: queryDto.priceTo });
         queryDto.ratingFrom && qb.andWhere("product.rating >= :ratingFrom", { ratingFrom: queryDto.ratingFrom });
         queryDto.ratingTo && qb.andWhere("product.rating <= :ratingTo", { ratingTo: queryDto.ratingTo });
         queryDto.stockQuantity && qb.andWhere("product.stockQuantity >= :stockQuantity", { stockQuantity: queryDto.stockQuantity });
@@ -85,9 +80,15 @@ export class ProductsService {
       where: { slug: Equal(slug) },
       relations: {
         subCategory: true,
-        discount: true,
         cutType: true,
         preparation: true,
+        skus: {
+          attributeOptions: {
+            attribute: true
+          },
+          images: true,
+          discount: true
+        }
       }
     });
 
@@ -101,21 +102,21 @@ export class ProductsService {
     // evaluate cutType, preparationType, category
     const dependencies = await this.extractDependencies(updateProductDto, existing)
 
-    // evaluate coverImage
-    const coverImage = updateProductDto.coverImage ? getImageURL(updateProductDto.coverImage) : existing.coverImage;
+    // // evaluate coverImage
+    // const coverImage = updateProductDto.coverImage ? getImageURL(updateProductDto.coverImage) : existing.coverImage;
 
-    // evaluate otherImages
-    // TODO: also handle previously uploaded other images
-    let images: string[] = [];
-    if (updateProductDto.otherImages) {
-      images = updateProductDto.otherImages.map((image: string | FileSystemStoredFile) => getImageURL(image));
-    }
+    // // evaluate otherImages
+    // // TODO: also handle previously uploaded other images
+    // let images: string[] = [];
+    // if (updateProductDto.otherImages) {
+    //   images = updateProductDto.otherImages.map((image: string | FileSystemStoredFile) => getImageURL(image));
+    // }
 
     Object.assign(existing, {
       ...updateProductDto,
       ...dependencies,
-      coverImage,
-      otherImages: images
+      // coverImage,
+      // otherImages: images
     })
 
     return await this.productRepo.save(existing);

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { DiscountsService } from './discounts.service';
 import { CreateDiscountDto, UpdateDiscountDto } from './dto/discount.dto';
@@ -7,6 +7,7 @@ import { ChekcAbilities } from 'src/core/decorators/abilities.decorator';
 import { Public } from 'src/core/decorators/setPublicRoute.decorator';
 import { ApiPaginatedResponse } from 'src/core/decorators/apiPaginatedResponse.decorator';
 import { QueryDto } from 'src/core/dto/query.dto';
+import { TransactionInterceptor } from 'src/core/interceptors/transaction.interceptor';
 
 @ApiBearerAuth()
 @ApiTags('Discounts')
@@ -16,10 +17,11 @@ export class DiscountsController {
 
     @Post()
     @ChekcAbilities({ action: Action.CREATE, subject: 'all' })
+    @UseInterceptors(TransactionInterceptor)
     create(@Body() createDiscountDto: CreateDiscountDto) {
         return this.discountService.create(createDiscountDto);
     }
-    
+
     @Get()
     @ApiPaginatedResponse(CreateDiscountDto)
     @ChekcAbilities({ action: Action.READ, subject: 'all' })
@@ -35,6 +37,7 @@ export class DiscountsController {
 
     @Patch(':id')
     @ChekcAbilities({ action: Action.UPDATE, subject: 'all' })
+    @UseInterceptors(TransactionInterceptor)
     update(@Param('id') id: string, @Body() updateDiscountDto: UpdateDiscountDto) {
         return this.discountService.update(id, updateDiscountDto);
     }

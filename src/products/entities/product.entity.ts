@@ -9,6 +9,9 @@ import { CartItem } from "src/cart-items/entities/cart-item.entity";
 import { Review } from "src/reviews/entities/review.entity";
 import { OrderItem } from "src/orders/entities/order-item.entity";
 import { SubCategory } from "src/categories/entities/sub-category.entity";
+import { Sku } from "../skus/entities/sku.entity";
+import { generateSlug } from "src/core/utils/generateSlug";
+import { generateProductCode } from "src/core/utils/generateProductCode";
 
 @Entity()
 export class Product extends BaseEntity {
@@ -18,32 +21,37 @@ export class Product extends BaseEntity {
     @Column({ type: 'text', nullable: true })
     slug: string;
 
+    @BeforeInsert()
+    @BeforeUpdate()
+    generateSlug() {
+        this.slug = generateSlug(this.productName);
+    }
+
     @Column({ type: 'longtext' })
     description: string
 
-    @Column({ type: 'simple-array' })
-    productOptions: string[]
+    @Column({ type: 'text', nullable: true })
+    code: string
 
-    @Column({ type: 'real', precision: 10, scale: 2 })
-    price: number
+    @BeforeInsert()
+    generateCode() {
+        this.code = generateProductCode(this.productName);
+    }
 
-    @Column({ type: 'varchar' })
-    perUnit: string
+    // @Column({ type: 'real', precision: 10, scale: 2 })
+    // price: number
 
     @Column({ type: 'varchar', default: CONSTANTS.defaultProductPriceUnit })
     priceUnit: string
 
-    @Column({ type: 'real', precision: 10, scale: 2 })
-    currentPrice: number
+    @OneToMany(() => Sku, sku => sku.product)
+    skus: Sku[];
 
-    @Column({ type: 'int', default: 0 })
-    stockQuantity: number
+    @Column({ type: 'real', precision: 10, scale: 2, default: 0 })
+    currentPrice: number
 
     @Column({ type: 'varchar' })
     coverImage: string
-
-    @Column({ type: 'simple-array', nullable: true })
-    otherImages?: string[]
 
     @ManyToOne(() => SubCategory, subCategory => subCategory.products, { onDelete: 'RESTRICT' })
     subCategory: SubCategory
@@ -54,26 +62,11 @@ export class Product extends BaseEntity {
     @ManyToOne(() => Preparation, preparation => preparation.products, { nullable: true })
     preparation: Preparation
 
-    @OneToOne(() => Discount, discount => discount.product, { nullable: true })
-    discount: Discount
-
-    @OneToMany(() => CartItem, cartItem => cartItem.product, { nullable: true })
-    cartItems: CartItem[]
-
     @OneToMany(() => Review, review => review.product, { nullable: true })
     reviews: Review[]
 
     @Column({ type: 'real', default: 0 })
     rating: number
-
-    @BeforeUpdate()
-    @BeforeInsert()
-    calculateCurrentPrice() {
-        this.currentPrice = this.discount ? this.price - (this.price * this.discount?.discountPercentage / 100) : this.price;
-    }
-
-    @OneToMany(() => OrderItem, orderItem => orderItem.product, { nullable: true })
-    orderItems: OrderItem[]
 
     @Column({ type: 'int', default: 0 })
     soldCount: number

@@ -1,15 +1,15 @@
 import { Cart } from "src/carts/entities/cart.entity";
 import { BaseEntity } from "src/core/entities/base.entity";
-import { Product } from "src/products/entities/product.entity";
-import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne } from "typeorm";
+import { Sku } from "src/products/skus/entities/sku.entity";
+import { BeforeInsert, Column, Entity, ManyToOne } from "typeorm";
 
 @Entity()
 export class CartItem extends BaseEntity {
     @ManyToOne(() => Cart, (cart) => cart.cartItems, { onDelete: "CASCADE" })
     cart: Cart;
 
-    @ManyToOne(() => Product, (product) => product.cartItems)
-    product: Product;
+    @ManyToOne(() => Sku, (sku) => sku.cartItems)
+    sku: Sku;
 
     @Column({ type: 'int', default: 1 })
     quantity: number;
@@ -19,6 +19,6 @@ export class CartItem extends BaseEntity {
 
     @BeforeInsert()
     calculatePrice() {
-        this.price = this.product.currentPrice * this.quantity;
+        this.price = this.sku.currentPrice * this.quantity;
     }
 }
