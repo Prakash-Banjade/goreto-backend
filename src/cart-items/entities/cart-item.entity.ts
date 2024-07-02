@@ -19,6 +19,6 @@ export class CartItem extends BaseEntity {
 
     @BeforeInsert()
     calculatePrice() {
-        this.price = this.sku.currentPrice * this.quantity;
+        this.price = this.sku.salePrice * this.quantity;
     }
 }

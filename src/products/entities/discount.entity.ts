@@ -4,9 +4,9 @@ import { Sku } from "../skus/entities/sku.entity";
 
 @Entity()
 export class Discount extends BaseEntity {
-    @OneToOne(() => Sku, sku => sku.discount, { onDelete: 'CASCADE' })
-    @JoinColumn()
-    sku: Sku;
+    // @OneToOne(() => Sku, sku => sku.discount, { onDelete: 'CASCADE' })
+    // @JoinColumn()
+    // sku: Sku;
 
     @Column({ type: 'real' })
     discountPercentage: number;

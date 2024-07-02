@@ -1,11 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
 import { Brackets, ILike, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import getImageURL from 'src/core/utils/getImageURL';
-import { generateSlug } from 'src/core/utils/generateSlug';
 import { CategoryQueryDto } from './dto/category-query.dto';
 import paginatedData from 'src/core/utils/paginatedData';
 
@@ -16,19 +15,26 @@ export class CategoriesService {
   ) { }
 
   async create(createCategoryDto: CreateCategoryDto) {
-    const existingCategory = await this.categoriesRepo.findOneBy({ categoryName: createCategoryDto.categoryName });
-    if (existingCategory) throw new BadRequestException('Category already exists');
+    const existingCategory = await this.categoriesRepo.findOne({
+      where: [
+        { categoryName: createCategoryDto.categoryName },
+        { slug: createCategoryDto?.slug }
+      ]
+    });
+    if (existingCategory) throw new ConflictException('Category with same name or slug already exists');
 
-    // evaluate coverImage
-    const coverImage = getImageURL(createCategoryDto.coverImage);
+    const parentCategory = createCategoryDto?.parentCategorySlug ? await this.categoriesRepo.findOneBy({ slug: createCategoryDto.parentCategorySlug }) : null;
+    if (createCategoryDto?.parentCategorySlug && !parentCategory) throw new NotFoundException('Parent category not found');
 
-    const slug = generateSlug(createCategoryDto.categoryName);
+    // evaluate featuredImage
+    const featuredImage = getImageURL(createCategoryDto.featuredImage);
 
     const newCategory = this.categoriesRepo.create({
       ...createCategoryDto,
-      coverImage,
-      slug,
+      featuredImage,
+      parentCategory,
     });
+
     return await this.categoriesRepo.save(newCategory);
   }
 
@@ -37,7 +43,7 @@ export class CategoriesService {
 
     queryBuilder
       .orderBy("category.createdAt", queryDto.order)
-      .leftJoinAndSelect("category.subCategories", "subCategory")
+      .leftJoinAndSelect("category.parentCategory", "parentCategory")
       .andWhere(new Brackets(qb => {
         qb.where([
           { categoryName: ILike(`%${queryDto.search ?? ''}%`) },
@@ -50,7 +56,7 @@ export class CategoriesService {
   async findOne(slug: string) {
     const existingCategory = await this.categoriesRepo.findOne({
       where: { slug },
-      relations: { subCategories: true }
+      relations: { parentCategory: true }
     });
     if (!existingCategory) throw new Error('Category not found');
 
@@ -60,9 +66,9 @@ export class CategoriesService {
   async update(slug: string, updateCategoryDto: UpdateCategoryDto) {
     const existingCategory = await this.findOne(slug);
 
-    // evaluate coverImage
-    const coverImage = updateCategoryDto.coverImage ? getImageURL(updateCategoryDto.coverImage) : existingCategory.coverImage;
-    Object.assign(existingCategory, { ...updateCategoryDto, coverImage });
+    // evaluate featuredImage
+    const featuredImage = updateCategoryDto.featuredImage ? getImageURL(updateCategoryDto.featuredImage) : existingCategory.featuredImage;
+    Object.assign(existingCategory, { ...updateCategoryDto, featuredImage });
     return await this.categoriesRepo.save(existingCategory);
   }
 

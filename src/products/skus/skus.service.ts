@@ -83,7 +83,6 @@ export class SkusService {
       relations: {
         attributeOptions: true,
         product: true,
-        discount: true,
       }
     })
     if (!existing) throw new NotFoundException('Sku not found')

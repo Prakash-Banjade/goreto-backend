@@ -4,7 +4,6 @@ import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CartItem } from './entities/cart-item.entity';
 import { Brackets, IsNull, Not, Or, Repository } from 'typeorm';
-import { ProductsService } from 'src/products/products.service';
 import { Deleted, QueryDto } from 'src/core/dto/query.dto';
 import paginatedData from 'src/core/utils/paginatedData';
 import { AuthUser } from 'src/core/types/global.types';
@@ -16,7 +15,6 @@ import { SkusService } from 'src/products/skus/skus.service';
 export class CartItemsService {
   constructor(
     @InjectRepository(CartItem) private readonly cartItemsRepo: Repository<CartItem>,
-    private readonly productsService: ProductsService,
     private readonly usersService: UsersService,
     private readonly skusService: SkusService,
   ) { }
@@ -82,12 +80,12 @@ export class CartItemsService {
   async update(id: string, updateCartItemDto: UpdateCartItemDto, @CurrentUser() currentUser: AuthUser) {
     const existing = await this.findOne(id, currentUser);
 
-    const product = updateCartItemDto.skuId ? await this.productsService.findOne(updateCartItemDto.skuId) : existing.sku
+    const product = updateCartItemDto.skuId ? await this.skusService.findOne(updateCartItemDto.skuId) : existing.sku
 
     Object.assign(existing, {
       ...updateCartItemDto,
       product,
-      price: product.currentPrice * (updateCartItemDto?.quantity ?? existing.quantity)
+      price: product.salePrice * (updateCartItemDto?.quantity ?? existing.quantity)
     })
 
     return await this.cartItemsRepo.save(existing);

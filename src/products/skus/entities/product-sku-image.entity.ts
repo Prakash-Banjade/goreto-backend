@@ -7,6 +7,6 @@ export class ProductSkuImage extends BaseEntity {
     @Column({ type: "varchar", nullable: false })
     url: string;
 
-    @ManyToOne(() => Sku, (sku) => sku.images, { onDelete: "CASCADE" })
+    @ManyToOne(() => Sku, (sku) => sku.gallery, { onDelete: "CASCADE" })
     sku: Sku;
 }

@@ -20,6 +20,6 @@ export class OrderItem extends BaseEntity {
     @BeforeInsert()
     @BeforeUpdate()
     calculatePrice() {
-        this.price = this.sku.currentPrice * this.quantity;
+        this.price = this.sku.salePrice * this.quantity;
     }
 }

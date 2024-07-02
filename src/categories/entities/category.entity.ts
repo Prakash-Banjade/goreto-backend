@@ -1,7 +1,7 @@
 import { BaseEntity } from "src/core/entities/base.entity";
-import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany } from "typeorm";
-import { SubCategory } from "./sub-category.entity";
+import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, OneToMany, OneToOne } from "typeorm";
 import { generateSlug } from "src/core/utils/generateSlug";
+import { Product } from "src/products/entities/product.entity";
 
 @Entity()
 export class Category extends BaseEntity {
@@ -18,11 +18,15 @@ export class Category extends BaseEntity {
     }
 
     @Column({ type: 'varchar' })
-    coverImage: string;
+    featuredImage: string;
 
     @Column({ type: 'longtext' })
     description: string;
 
-    @OneToMany(() => SubCategory, (subCategory) => subCategory.category, { nullable: true })
-    subCategories: Category[]
+    @OneToMany(() => Product, (product) => product.category, { nullable: true })
+    products?: Product[]
+
+    @OneToOne(() => Category, (category) => category.parentCategory, { nullable: true })
+    @JoinColumn()
+    parentCategory: Category
 }

@@ -13,38 +13,38 @@ import { TransactionInterceptor } from 'src/core/interceptors/transaction.interc
 @ApiTags('Discounts')
 @Controller('discounts')
 export class DiscountsController {
-    constructor(private readonly discountService: DiscountsService) { }
+    // constructor(private readonly discountService: DiscountsService) { }
 
-    @Post()
-    @ChekcAbilities({ action: Action.CREATE, subject: 'all' })
-    @UseInterceptors(TransactionInterceptor)
-    create(@Body() createDiscountDto: CreateDiscountDto) {
-        return this.discountService.create(createDiscountDto);
-    }
+    // @Post()
+    // @ChekcAbilities({ action: Action.CREATE, subject: 'all' })
+    // @UseInterceptors(TransactionInterceptor)
+    // create(@Body() createDiscountDto: CreateDiscountDto) {
+    //     return this.discountService.create(createDiscountDto);
+    // }
 
-    @Get()
-    @ApiPaginatedResponse(CreateDiscountDto)
-    @ChekcAbilities({ action: Action.READ, subject: 'all' })
-    findAll(@Query() queryDto: QueryDto) {
-        return this.discountService.findAll(queryDto);
-    }
+    // @Get()
+    // @ApiPaginatedResponse(CreateDiscountDto)
+    // @ChekcAbilities({ action: Action.READ, subject: 'all' })
+    // findAll(@Query() queryDto: QueryDto) {
+    //     return this.discountService.findAll(queryDto);
+    // }
 
-    @Get(':id')
-    @ChekcAbilities({ action: Action.READ, subject: 'all' })
-    findOne(@Param('id') id: string) {
-        return this.discountService.findOne(id);
-    }
+    // @Get(':id')
+    // @ChekcAbilities({ action: Action.READ, subject: 'all' })
+    // findOne(@Param('id') id: string) {
+    //     return this.discountService.findOne(id);
+    // }
 
-    @Patch(':id')
-    @ChekcAbilities({ action: Action.UPDATE, subject: 'all' })
-    @UseInterceptors(TransactionInterceptor)
-    update(@Param('id') id: string, @Body() updateDiscountDto: UpdateDiscountDto) {
-        return this.discountService.update(id, updateDiscountDto);
-    }
+    // @Patch(':id')
+    // @ChekcAbilities({ action: Action.UPDATE, subject: 'all' })
+    // @UseInterceptors(TransactionInterceptor)
+    // update(@Param('id') id: string, @Body() updateDiscountDto: UpdateDiscountDto) {
+    //     return this.discountService.update(id, updateDiscountDto);
+    // }
 
-    @Delete(':id')
-    @ChekcAbilities({ action: Action.DELETE, subject: 'all' })
-    remove(@Param('id') id: string) {
-        return this.discountService.remove(id);
-    }
+    // @Delete(':id')
+    // @ChekcAbilities({ action: Action.DELETE, subject: 'all' })
+    // remove(@Param('id') id: string) {
+    //     return this.discountService.remove(id);
+    // }
 }

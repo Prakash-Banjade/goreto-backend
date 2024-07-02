@@ -2,13 +2,9 @@ import { Category } from "src/categories/entities/category.entity";
 import { CONSTANTS } from "src/core/CONSTANTS";
 import { BaseEntity } from "src/core/entities/base.entity";
 import { CutType } from "src/product-filters/cut-types/entities/cut-type.entity";
-import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany, OneToOne } from "typeorm";
-import { Discount } from "./discount.entity";
+import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany } from "typeorm";
 import { Preparation } from "src/product-filters/preparations/entities/preparation.entity";
-import { CartItem } from "src/cart-items/entities/cart-item.entity";
 import { Review } from "src/reviews/entities/review.entity";
-import { OrderItem } from "src/orders/entities/order-item.entity";
-import { SubCategory } from "src/categories/entities/sub-category.entity";
 import { Sku } from "../skus/entities/sku.entity";
 import { generateSlug } from "src/core/utils/generateSlug";
 import { generateProductCode } from "src/core/utils/generateProductCode";
@@ -51,10 +47,10 @@ export class Product extends BaseEntity {
     currentPrice: number
 
     @Column({ type: 'varchar' })
-    coverImage: string
+    featuredImage: string
 
-    @ManyToOne(() => SubCategory, subCategory => subCategory.products, { onDelete: 'RESTRICT' })
-    subCategory: SubCategory
+    @ManyToOne(() => Category, category => category.products, { onDelete: 'RESTRICT' })
+    category: Category
 
     @ManyToOne(() => CutType, cutType => cutType.products, { nullable: true })
     cutType: CutType
