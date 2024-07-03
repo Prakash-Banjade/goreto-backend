@@ -1,6 +1,6 @@
 import { BaseEntity } from 'src/core/entities/base.entity';
 import { Product } from 'src/products/entities/product.entity';
-import { Entity, Column, ManyToOne, OneToMany, BeforeInsert, BeforeUpdate } from 'typeorm';
+import { Entity, Column, ManyToOne, OneToMany, BeforeInsert, BeforeUpdate, ManyToMany, JoinTable } from 'typeorm';
 import { AttributeOption } from 'src/products/attribute-options/entities/attribute-option.entity';
 import { CartItem } from 'src/cart-items/entities/cart-item.entity';
 import { OrderItem } from 'src/orders/entities/order-item.entity';
@@ -39,8 +39,9 @@ export class Sku extends BaseEntity {
     @Column({ type: 'int', default: 0 })
     stockQuantity: number;
 
-    @ManyToOne(() => AttributeOption, attributeOption => attributeOption.skus) // TODO: make this ManyToMany
-    attributeOptions: AttributeOption
+    @ManyToMany(() => AttributeOption)
+    @JoinTable()
+    attributeOptions: AttributeOption[]
 
     @OneToMany(() => CartItem, cartItem => cartItem.sku, { nullable: true })
     cartItems: CartItem[]

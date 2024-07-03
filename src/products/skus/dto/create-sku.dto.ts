@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsArray, IsOptional, IsString, ValidateNested, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsArray, IsOptional, IsString, ValidateNested, IsUUID, ArrayMinSize } from 'class-validator';
 import { FileSystemStoredFile } from 'nestjs-form-data';
 
 class ProductSku {
@@ -18,8 +18,10 @@ class ProductSku {
 
     @ApiProperty({ type: String, format: 'uuid', description: "Product attribute option id" })
     @IsNotEmpty()
-    @IsUUID()
-    attributeOptionId: string; // TODO: make this many to many
+    @IsUUID('all', { each: true })
+    @IsArray()
+    @ArrayMinSize(1)
+    attributeOptionIds: string[];
 
     @ApiProperty({ type: Number, description: "Product stock quantity" })
     @IsNotEmpty()

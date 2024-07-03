@@ -28,15 +28,22 @@ export class SkusService {
     if (product.type !== ProductType.VARIABLE) throw new BadRequestException('Product must be variable type');
 
     for (const sku of createSkuDto.skus) {
-      const attributeOption = await this.attributeOptionService.findOne(sku.attributeOptionId);
+      const attributeOptions = await Promise.all(
+        sku.attributeOptionIds.map(async (attributeOptionId) => {
+          return await this.attributeOptionService.findOne(attributeOptionId)
+        })
+      )
+
       // generate sku code
-      const code = this.generateSkuCode(attributeOption, product.code);
+      const code = this.generateSkuCode(attributeOptions, product.code);
 
       const newSku = this.skuRepo.create({
         price: sku.price,
+        salePrice: sku.salePrice,
+        stockQuantity: sku.stockQuantity,
         code,
         product,
-        attributeOptions: attributeOption
+        attributeOptions: attributeOptions
       });
 
       await this.skuRepo.save(newSku);
@@ -68,10 +75,10 @@ export class SkusService {
     }
   }
 
-  generateSkuCode(attributeOption: AttributeOption, productCode: string) {
+  generateSkuCode(attributeOptions: AttributeOption[], productCode: string) {
     const brandCode = CONSTANTS.brandCode;
-    const attributeValue = attributeOption.value.replaceAll(/\s+/g, '_');
-    const attributeCode = attributeOption.attribute.code;
+    const attributeValue = attributeOptions.map((attributeOption) => attributeOption.value).join('-');
+    const attributeCode = attributeOptions.map((attributeOption) => attributeOption.attribute.code).join('-');
 
     return `${brandCode}-${productCode}-${attributeCode}-${attributeValue}`
 
