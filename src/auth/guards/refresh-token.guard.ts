@@ -11,7 +11,7 @@ export class RefreshTokenGuard implements CanActivate {
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
         const refresh_token = this.extractTokenFromHeader(request);
-        console.log(refresh_token)
+
         if (!refresh_token) throw new UnauthorizedException();
         try {
             await this.jwtService.verifyAsync(refresh_token, {
