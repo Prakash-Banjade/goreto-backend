@@ -25,7 +25,7 @@ export class SkusService {
     const product = await this.productsService.findOne(createSkuDto.productSlug)
 
     // CHECK IF THE PRODUCT IS VARIABLE
-    if (product.type !== ProductType.VARIABLE) throw new BadRequestException('Product must be variable type');
+    if (product.productType !== ProductType.VARIABLE) throw new BadRequestException('Product must be variable type');
 
     for (const sku of createSkuDto.skus) {
       const attributeOptions = await Promise.all(

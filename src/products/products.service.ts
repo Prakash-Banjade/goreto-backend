@@ -31,7 +31,7 @@ export class ProductsService {
       productName: createProductDto.productName,
       description: createProductDto.description,
       slug: createProductDto?.slug,
-      type: createProductDto.productType,
+      productType: createProductDto.productType,
       price: createProductDto?.price,
       salePrice: createProductDto?.salesPrice,
       stockQuantity: createProductDto?.stockQuantity,
