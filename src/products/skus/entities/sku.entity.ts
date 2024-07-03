@@ -1,10 +1,10 @@
 import { BaseEntity } from 'src/core/entities/base.entity';
 import { Product } from 'src/products/entities/product.entity';
 import { Entity, Column, ManyToOne, OneToMany, BeforeInsert, BeforeUpdate } from 'typeorm';
-import { ProductSkuImage } from './product-sku-image.entity';
 import { AttributeOption } from 'src/products/attribute-options/entities/attribute-option.entity';
 import { CartItem } from 'src/cart-items/entities/cart-item.entity';
 import { OrderItem } from 'src/orders/entities/order-item.entity';
+import { ProductImage } from './product-image.entity';
 
 @Entity()
 export class Sku extends BaseEntity {
@@ -17,7 +17,7 @@ export class Sku extends BaseEntity {
     @Column({ type: 'real', nullable: true })
     salePrice?: number;
 
-    @Column({ type: 'real', default: 0 })
+    @Column({ type: 'real', default: 0, scale: 2, precision: 10 })
     discountPercentage?: number;
 
     @BeforeInsert()
@@ -30,9 +30,8 @@ export class Sku extends BaseEntity {
         }
     }
 
-
-    @OneToMany(() => ProductSkuImage, productSkuImage => productSkuImage.sku, { nullable: true })
-    gallery: ProductSkuImage[]
+    @OneToMany(() => ProductImage, productImage => productImage.sku, { nullable: true })
+    gallery: ProductImage[]
 
     @ManyToOne(() => Product, product => product.skus)
     product: Product;
@@ -40,17 +39,8 @@ export class Sku extends BaseEntity {
     @Column({ type: 'int', default: 0 })
     stockQuantity: number;
 
-    // @OneToMany(() => AttributeOptionSku, attributeOptionSku => attributeOptionSku.sku)
-    // attributeOptionSkus: AttributeOptionSku[];
-
-    @ManyToOne(() => AttributeOption, attributeOption => attributeOption.skus)
+    @ManyToOne(() => AttributeOption, attributeOption => attributeOption.skus) // TODO: make this ManyToMany
     attributeOptions: AttributeOption
-
-    // @OneToOne(() => Discount, discount => discount.sku, { nullable: true })
-    // discount: Discount
-
-    // @Column({ type: 'real', precision: 10, scale: 2, default: 0 })
-    // currentPrice: number;
 
     @OneToMany(() => CartItem, cartItem => cartItem.sku, { nullable: true })
     cartItems: CartItem[]

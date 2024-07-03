@@ -4,7 +4,7 @@ import { CreateCartItemDto } from './dto/create-cart-item.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { ApiPaginatedResponse } from 'src/core/decorators/apiPaginatedResponse.decorator';
 import { QueryDto } from 'src/core/dto/query.dto';
-import { Action, AuthUser } from 'src/core/types/global.types';
+import { Action, AuthUser, ProductType } from 'src/core/types/global.types';
 import { ChekcAbilities } from 'src/core/decorators/abilities.decorator';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from 'src/core/decorators/currentuser.decorator';
@@ -22,7 +22,14 @@ export class CartItemsController {
   @ApiConsumes('multipart/form-data')
   @FormDataRequest({ storage: FileSystemStoredFile })
   create(@Body() createCartItemDto: CreateCartItemDto, @CurrentUser() currentUser: AuthUser) {
-    return this.cartItemsService.create(createCartItemDto, currentUser);
+    switch (createCartItemDto.productType) {
+      case ProductType.SIMPLE: {
+        return this.cartItemsService.addSimpleProductToCart(createCartItemDto, currentUser);
+      }
+      case ProductType.VARIABLE: {
+        return this.cartItemsService.addProductSkuToCart(createCartItemDto, currentUser);
+      }
+    }
   }
 
   @Get()

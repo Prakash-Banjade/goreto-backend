@@ -48,3 +48,8 @@ export enum PaymentStatus {
     COMPLETED = 'completed',
     FAILED = 'failed',
 }
+
+export enum ProductType {
+    SIMPLE = 'simple',
+    VARIABLE = 'variable',
+}

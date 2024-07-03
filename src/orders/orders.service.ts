@@ -19,6 +19,9 @@ import { CanceledOrder } from './entities/canceled-order.entity';
 import { PaymentsService } from 'src/payments/payments.service';
 import { Sku } from 'src/products/skus/entities/sku.entity';
 import { SkuRepository } from 'src/products/skus/repository/sku.repository';
+import { CartItem } from 'src/cart-items/entities/cart-item.entity';
+import { ProductsRepository } from 'src/products/repository/product.repository';
+import { Product } from 'src/products/entities/product.entity';
 
 @Injectable()
 export class OrdersService {
@@ -26,9 +29,11 @@ export class OrdersService {
     @InjectRepository(Order) private readonly ordersRepo: Repository<Order>,
     private readonly ordersRepository: OrdersRepository,
     @InjectRepository(OrderItem) private readonly orderItemsRepo: Repository<OrderItem>,
+    @InjectRepository(Product) private readonly productRepo: Repository<Product>,
     private readonly orderItemsRepository: OrderItemsRepository,
     @InjectRepository(Sku) private readonly skuRepo: Repository<Sku>,
     private readonly skuRepository: SkuRepository,
+    private readonly productRepository: ProductsRepository,
     private readonly paymentService: PaymentsService,
     @InjectRepository(CanceledOrder) private readonly canceledOrdersRepo: Repository<CanceledOrder>,
     private readonly usersService: UsersService,
@@ -63,13 +68,11 @@ export class OrdersService {
       const cartItem = cart.cartItems.find(item => item.id === cartItemId); // searching for cart item in cart instead of the db
       if (!cartItem) throw new NotFoundException('Cart item not found');
 
-      const productSku = cartItem.sku;
-      if (!productSku) throw new BadRequestException(`Not available: ${productSku.product.productName}`);
-      if (productSku.stockQuantity < cartItem.quantity) throw new BadRequestException(`Insufficient stock: ${productSku.product.productName} \n In Stock: ${productSku.stockQuantity} \n Requested: ${cartItem.quantity}`);
-
+      const product = cartItem.simpleProduct ?? cartItem.sku;
+      const productName = product instanceof Product ? product.productName : product.product.productName;
+      if (product.stockQuantity < cartItem.quantity) throw new BadRequestException(`Insufficient stock: ${productName} \n In Stock: ${product.stockQuantity} \n Requested: ${cartItem.quantity}`);
       totalAmount += cartItem.price;
     }
-
 
     // create order
     const order = this.ordersRepo.create({
@@ -82,20 +85,9 @@ export class OrdersService {
 
     // create order-items
     for (const cartItem of cart.cartItems) {
-      const orderItem = this.orderItemsRepo.create({
-        order: savedOrder,
-        sku: cartItem.sku,
-        quantity: cartItem.quantity,
-      })
-
-      await this.orderItemsRepository.createOrderItem(orderItem); // transaction
-
-      // update product stock
-      const productSku = await this.skuRepo.findOne({
-        where: { id: cartItem.sku.id },
-      });
-      productSku.stockQuantity -= cartItem.quantity;
-      await this.skuRepository.saveSku(productSku); // transaction
+      cartItem?.simpleProduct
+        ? await this.createSimpleProductOrderItem(savedOrder, cartItem)
+        : await this.createSkuProductOrderItem(savedOrder, cartItem);
     }
 
     // TODO: REMOVE CART-ITEMS AFTER ORDER IS CREATED ??
@@ -106,6 +98,40 @@ export class OrdersService {
     // TODO: INCREASE PRODUCT SOLD COUNT AFTER SUCCESSFUL PAYMENT
 
     return paymentResult;
+  }
+
+  async createSimpleProductOrderItem(order: Order, cartItem: CartItem) {
+    const orderItem = this.orderItemsRepo.create({
+      order: order,
+      simpleProduct: cartItem.simpleProduct,
+      quantity: cartItem.quantity,
+    })
+
+    await this.orderItemsRepository.createOrderItem(orderItem); // transaction
+
+    // update product stock
+    const product = await this.productRepo.findOne({
+      where: { id: cartItem.simpleProduct.id },
+    });
+    product.stockQuantity -= cartItem.quantity;
+    await this.productRepository.saveProduct(product); // transaction
+  }
+
+  async createSkuProductOrderItem(order: Order, cartItem: CartItem) {
+    const orderItem = this.orderItemsRepo.create({
+      order: order,
+      sku: cartItem.sku,
+      quantity: cartItem.quantity,
+    })
+
+    await this.orderItemsRepository.createOrderItem(orderItem); // transaction
+
+    // update product stock
+    const productSku = await this.skuRepo.findOne({
+      where: { id: cartItem.sku.id },
+    });
+    productSku.stockQuantity -= cartItem.quantity;
+    await this.skuRepository.saveSku(productSku); // transaction
   }
 
   async findAll(queryDto: OrderQueryDto, currentUser: AuthUser) {
@@ -120,13 +146,14 @@ export class OrdersService {
       .where({ deletedAt })
       .leftJoinAndSelect("order.orderItems", "orderItems")
       .leftJoinAndSelect("orderItems.sku", "sku")
+      .leftJoinAndSelect("orderItems.simpleProduct", "simpleProduct")
       // .leftJoinAndSelect("sku", "sku.product AS productSku")
       .leftJoinAndSelect("order.payment", "payment")
       .andWhere(new Brackets(qb => {
         qb.where([
           // { productName: ILike(`%${queryDto.search ?? ''}%`) },
         ]);
-        qb.andWhere({ user: { id: currentUser.userId } });
+        currentUser.role === Roles.USER && qb.andWhere({ user: { id: currentUser.userId } });
       }))
 
     return paginatedData(queryDto, queryBuilder);
@@ -142,6 +169,7 @@ export class OrdersService {
           sku: {
             product: true
           },
+          simpleProduct: true
         }
       }
     })

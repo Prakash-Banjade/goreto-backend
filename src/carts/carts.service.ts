@@ -61,7 +61,7 @@ export class CartsService {
     const existing = await this.cartRepo.findOne({
       where: { user: { id: currentUser.userId } },
       relations: {
-        cartItems: { sku: { product: true } }
+        cartItems: { sku: { product: true }, simpleProduct: true }
       }
     })
     if (!existing) throw new BadRequestException('Cart not found');

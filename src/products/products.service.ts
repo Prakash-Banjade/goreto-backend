@@ -4,26 +4,20 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { Brackets, Equal, ILike, In, IsNull, Not, Or, Repository } from 'typeorm';
-import { CutTypesService } from 'src/product-filters/cut-types/cut-types.service';
-import { PreparationsService } from 'src/product-filters/preparations/preparations.service';
 import getImageURL from 'src/core/utils/getImageURL';
 import { ProductQueryDto } from './dto/product-query.dto';
 import { Deleted } from 'src/core/dto/query.dto';
 import paginatedData from 'src/core/utils/paginatedData';
-import { FileSystemStoredFile } from 'nestjs-form-data';
-import { AttributeOptionSku } from './attribute-option-skus/entities/attribute-option-skus.entity';
-import { Sku } from './skus/entities/sku.entity';
 import { CategoriesService } from 'src/categories/categories.service';
+import { FileSystemStoredFile } from 'nestjs-form-data';
+import { ProductImage } from './skus/entities/product-image.entity';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(Product) private readonly productRepo: Repository<Product>,
+    @InjectRepository(ProductImage) private readonly productImageRepo: Repository<ProductImage>,
     private readonly categoryService: CategoriesService,
-    private readonly cutTypeService: CutTypesService,
-    private readonly preparationService: PreparationsService,
-    @InjectRepository(Sku) private readonly skuRepo: Repository<Sku>,
-    @InjectRepository(AttributeOptionSku) private readonly attributeOptionSkuRepo: Repository<AttributeOptionSku>
   ) { }
 
   async create(createProductDto: CreateProductDto) {
@@ -34,13 +28,41 @@ export class ProductsService {
     const featuredImage = getImageURL(createProductDto.featuredImage);
 
     const product = this.productRepo.create({
-      ...createProductDto,
+      productName: createProductDto.productName,
+      description: createProductDto.description,
+      slug: createProductDto?.slug,
+      type: createProductDto.productType,
+      price: createProductDto?.price,
+      salePrice: createProductDto?.salesPrice,
+      stockQuantity: createProductDto?.stockQuantity,
       category,
       featuredImage,
-      // otherImages: images
     });
 
-    return await this.productRepo.save(product);
+    const savedProduct = await this.productRepo.save(product);
+
+    await this.uploadGallery(savedProduct, createProductDto?.gallery);
+
+    return savedProduct;
+
+  }
+
+  async uploadGallery(product: Product, gallery: FileSystemStoredFile[] | string[] | (FileSystemStoredFile | string)[]) {
+    // evaluate featured images
+    if (gallery) {
+      for (const image of gallery) {
+        const url = getImageURL(image);
+        const newImage = this.productImageRepo.create({
+          url,
+          simpleProduct: product,
+        });
+        await this.productImageRepo.save(newImage);
+      }
+    }
+
+    return {
+      message: 'Sku images uploaded',
+    }
   }
 
   async findAll(queryDto: ProductQueryDto) {
@@ -54,8 +76,7 @@ export class ProductsService {
       .withDeleted()
       .where({ deletedAt })
       .leftJoinAndSelect("product.category", "category")
-      .leftJoinAndSelect("product.cutType", "cutType")
-      .leftJoinAndSelect("product.preparation", "preparation")
+      .leftJoinAndSelect("product.gallery", "gallery")
       .leftJoinAndSelect("product.skus", "sku")
       .andWhere(new Brackets(qb => {
         qb.where([
@@ -78,8 +99,6 @@ export class ProductsService {
       where: { slug: Equal(slug) },
       relations: {
         category: true,
-        cutType: true,
-        preparation: true,
         skus: {
           attributeOptions: {
             attribute: true

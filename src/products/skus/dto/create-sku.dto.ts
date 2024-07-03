@@ -10,16 +10,23 @@ class ProductSku {
     @IsNumber()
     price: number;
 
+    @ApiPropertyOptional({ type: Number, description: "Product sale price" })
+    @IsNotEmpty()
+    @IsNumber()
+    @IsOptional()
+    salePrice?: number;
+
     @ApiProperty({ type: String, format: 'uuid', description: "Product attribute option id" })
     @IsNotEmpty()
     @IsUUID()
-    attributeOptionId: string;
+    attributeOptionId: string; // TODO: make this many to many
 
     @ApiProperty({ type: Number, description: "Product stock quantity" })
     @IsNotEmpty()
+    @IsNumber()
     @Transform(({ value }) => {
         if (isNaN(parseInt(value))) throw new BadRequestException('Product stock quantity must be a real number');
-        return Number(value);
+        return parseInt(value);
     })
     stockQuantity: number;
 }
@@ -42,6 +49,6 @@ export class SkuImageDto {
     @IsOptional()
     // @IsFile({ message: 'Invalid type for other images. Other images must be files', each: true })
     // @HasMimeType(['image/jpeg', 'image/png', 'image/webp'], { message: 'Invalid type for other images. Other images must be jpeg or png or webp', each: true })
-    images?: FileSystemStoredFile[] | string[] | (FileSystemStoredFile | string)[];
+    gallery?: FileSystemStoredFile[] | string[] | (FileSystemStoredFile | string)[];
 }
 

@@ -3,14 +3,14 @@ import { SkusService } from './skus.service';
 import { SkusController } from './skus.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Sku } from './entities/sku.entity';
-import { ProductSkuImage } from './entities/product-sku-image.entity';
+import { ProductImage } from './entities/product-image.entity';
 import { AttributeOptionsModule } from '../attribute-options/attribute-options.module';
 import { SkuRepository } from './repository/sku.repository';
 
 @Global()
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Sku, ProductSkuImage]),
+    TypeOrmModule.forFeature([Sku, ProductImage]),
     AttributeOptionsModule,
   ],
   controllers: [SkusController],

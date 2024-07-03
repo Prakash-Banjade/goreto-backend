@@ -1,5 +1,5 @@
 import { BaseEntity } from "src/core/entities/base.entity";
-import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, OneToMany, OneToOne } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne } from "typeorm";
 import { generateSlug } from "src/core/utils/generateSlug";
 import { Product } from "src/products/entities/product.entity";
 
@@ -26,7 +26,6 @@ export class Category extends BaseEntity {
     @OneToMany(() => Product, (product) => product.category, { nullable: true })
     products?: Product[]
 
-    @OneToOne(() => Category, (category) => category.parentCategory, { nullable: true })
-    @JoinColumn()
+    @ManyToOne(() => Category, (category) => category.parentCategory, { nullable: true })
     parentCategory: Category
 }

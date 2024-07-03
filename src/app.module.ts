@@ -20,7 +20,6 @@ import { AccountsModule } from './accounts/accounts.module';
 import { ShippingAddressesModule } from './shipping-addresses/shipping-addresses.module';
 import { ProductsModule } from './products/products.module';
 import { CategoriesModule } from './categories/categories.module';
-import { PreparationsModule } from './product-filters/preparations/preparations.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { CartsModule } from './carts/carts.module';
@@ -73,7 +72,6 @@ import { ConfigModule } from '@nestjs/config';
     ShippingAddressesModule,
     ProductsModule,
     CategoriesModule,
-    PreparationsModule,
     CartsModule,
     CartItemsModule,
     ReviewsModule,

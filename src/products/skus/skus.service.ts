@@ -1,27 +1,31 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateSkuDto, SkuImageDto } from './dto/create-sku.dto';
 import { UpdateSkuDto } from './dto/update-sku.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Sku } from './entities/sku.entity';
 import { Repository } from 'typeorm';
-import { ProductSkuImage } from './entities/product-sku-image.entity';
 import getImageURL from 'src/core/utils/getImageURL';
 import { ProductsService } from '../products.service';
 import { AttributeOptionService } from '../attribute-options/attribute-options.service';
 import { CONSTANTS } from 'src/core/CONSTANTS';
 import { AttributeOption } from '../attribute-options/entities/attribute-option.entity';
+import { ProductImage } from './entities/product-image.entity';
+import { ProductType } from 'src/core/types/global.types';
 
 @Injectable()
 export class SkusService {
   constructor(
     @InjectRepository(Sku) private readonly skuRepo: Repository<Sku>,
-    @InjectRepository(ProductSkuImage) private readonly productSkuImageRepo: Repository<ProductSkuImage>,
+    @InjectRepository(ProductImage) private readonly productImageRepo: Repository<ProductImage>,
     private readonly productsService: ProductsService,
     private readonly attributeOptionService: AttributeOptionService,
   ) { }
 
   async create(createSkuDto: CreateSkuDto) {
     const product = await this.productsService.findOne(createSkuDto.productSlug)
+
+    // CHECK IF THE PRODUCT IS VARIABLE
+    if (product.type !== ProductType.VARIABLE) throw new BadRequestException('Product must be variable type');
 
     for (const sku of createSkuDto.skus) {
       const attributeOption = await this.attributeOptionService.findOne(sku.attributeOptionId);
@@ -47,15 +51,15 @@ export class SkusService {
   async uploadSkuImages(id: string, skuImageDto: SkuImageDto) {
     const existing = await this.findOne(id);
 
-    // evaluate images
-    if (skuImageDto.images) {
-      for (const image of skuImageDto.images) {
+    // evaluate featured images
+    if (skuImageDto.gallery) {
+      for (const image of skuImageDto.gallery) {
         const url = getImageURL(image);
-        const newImage = this.productSkuImageRepo.create({
+        const newImage = this.productImageRepo.create({
           url,
           sku: existing,
         });
-        await this.productSkuImageRepo.save(newImage);
+        await this.productImageRepo.save(newImage);
       }
     }
 
@@ -66,7 +70,7 @@ export class SkusService {
 
   generateSkuCode(attributeOption: AttributeOption, productCode: string) {
     const brandCode = CONSTANTS.brandCode;
-    const attributeValue = attributeOption.value.replaceAll(/\s+/, '_');
+    const attributeValue = attributeOption.value.replaceAll(/\s+/g, '_');
     const attributeCode = attributeOption.attribute.code;
 
     return `${brandCode}-${productCode}-${attributeCode}-${attributeValue}`
@@ -90,15 +94,16 @@ export class SkusService {
     return existing
   }
 
-  async update(id: string, updateSkusDto: UpdateSkuDto) {
+  async update(id: string, updateSkuDto: UpdateSkuDto) {
     const existing = await this.findOne(id);
 
     // PRODUCT IS NOT UPDATED IN SKU UPDATE
 
-    const attributeOption = updateSkusDto.attributeOptionId ? await this.attributeOptionService.findOne(updateSkusDto.attributeOptionId) : existing.attributeOptions;
+    const attributeOption = updateSkuDto.attributeOptionId ? await this.attributeOptionService.findOne(updateSkuDto.attributeOptionId) : existing.attributeOptions;
 
     Object.assign(existing, {
-      price: updateSkusDto?.price ? updateSkusDto.price : existing.price,
+      ...updateSkuDto,
+      price: updateSkuDto?.price ? updateSkuDto.price : existing.price,
       attributeOptions: attributeOption
     });
 

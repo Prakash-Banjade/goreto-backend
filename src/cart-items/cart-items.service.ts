@@ -10,6 +10,7 @@ import { AuthUser } from 'src/core/types/global.types';
 import { UsersService } from 'src/users/users.service';
 import { CurrentUser } from 'src/core/decorators/currentuser.decorator';
 import { SkusService } from 'src/products/skus/skus.service';
+import { ProductsService } from 'src/products/products.service';
 
 @Injectable()
 export class CartItemsService {
@@ -17,9 +18,34 @@ export class CartItemsService {
     @InjectRepository(CartItem) private readonly cartItemsRepo: Repository<CartItem>,
     private readonly usersService: UsersService,
     private readonly skusService: SkusService,
+    private readonly productService: ProductsService,
   ) { }
 
-  async create(createCartItemDto: CreateCartItemDto, currentUser: AuthUser) {
+  async addSimpleProductToCart(createCartItemDto: CreateCartItemDto, currentUser: AuthUser) {
+    const user = await this.usersService.findOne(currentUser.userId);
+    const product = await this.productService.findOne(createCartItemDto.productSlug);
+
+    // ADD QUANTITY ON EXISTING
+    const existingCartItem = await this.cartItemsRepo.findOne({
+      where: { cart: { user: { id: currentUser.userId } }, simpleProduct: { id: product.id } }
+    });
+    if (existingCartItem) {
+      existingCartItem.quantity += createCartItemDto.quantity;
+      existingCartItem.simpleProduct = product; // this is just to calculate price in cart-item.entity
+      return await this.cartItemsRepo.save(existingCartItem);
+    }
+
+    // CREATE NEW
+    const cartItem = this.cartItemsRepo.create({
+      cart: user.cart,
+      simpleProduct: product,
+      quantity: createCartItemDto.quantity
+    });
+
+    return await this.cartItemsRepo.save(cartItem);
+  }
+
+  async addProductSkuToCart(createCartItemDto: CreateCartItemDto, currentUser: AuthUser) {
     const user = await this.usersService.findOne(currentUser.userId)
     const productSku = await this.skusService.findOne(createCartItemDto.skuId);
 
@@ -70,7 +96,7 @@ export class CartItemsService {
   async findOne(id: string, currentUser: AuthUser) {
     const existing = await this.cartItemsRepo.findOne({
       where: { id, cart: { user: { id: currentUser.userId } } },
-      relations: { sku: true }
+      relations: { sku: true, simpleProduct: true },
     })
     if (!existing) throw new BadRequestException('Cart item not found');
 
@@ -79,13 +105,17 @@ export class CartItemsService {
 
   async update(id: string, updateCartItemDto: UpdateCartItemDto, @CurrentUser() currentUser: AuthUser) {
     const existing = await this.findOne(id, currentUser);
+    const productPrice = existing?.price / (existing?.quantity ?? 1);
 
-    const product = updateCartItemDto.skuId ? await this.skusService.findOne(updateCartItemDto.skuId) : existing.sku
+    /**
+    |--------------------------------------------------
+    | PRODUCT IS NOT UPDATED IN CART ITEM UPDATE
+    |--------------------------------------------------
+    */
 
     Object.assign(existing, {
-      ...updateCartItemDto,
-      product,
-      price: product.salePrice * (updateCartItemDto?.quantity ?? existing.quantity)
+      quantity: updateCartItemDto?.quantity ?? existing.quantity,
+      price: productPrice * (updateCartItemDto?.quantity ?? existing.quantity)
     })
 
     return await this.cartItemsRepo.save(existing);
