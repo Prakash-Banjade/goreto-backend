@@ -47,7 +47,7 @@ export class ProductsService {
 
   }
 
-  async uploadGallery(product: Product, gallery: FileSystemStoredFile[] | string[] | (FileSystemStoredFile | string)[]) {
+  async uploadGallery(product: Product, gallery: FileSystemStoredFile[] | string[] | (FileSystemStoredFile | string)[] | undefined) {
     // evaluate featured images
     if (gallery) {
       for (const image of gallery) {
@@ -58,10 +58,6 @@ export class ProductsService {
         });
         await this.productImageRepo.save(newImage);
       }
-    }
-
-    return {
-      message: 'Sku images uploaded',
     }
   }
 
@@ -118,24 +114,23 @@ export class ProductsService {
     // evaluate cutType, preparationType, category
     const category = updateProductDto.categorySlug ? await this.categoryService.findOne(updateProductDto.categorySlug) : existing.category;
 
-    // // evaluate featuredImage
-    // const featuredImage = updateProductDto.featuredImage ? getImageURL(updateProductDto.featuredImage) : existing.featuredImage;
-
-    // // evaluate otherImages
-    // // TODO: also handle previously uploaded other images
-    // let images: string[] = [];
-    // if (updateProductDto.otherImages) {
-    //   images = updateProductDto.otherImages.map((image: string | FileSystemStoredFile) => getImageURL(image));
-    // }
+    // evaluate featuredImage
+    const featuredImage = updateProductDto.featuredImage ? getImageURL(updateProductDto.featuredImage) : existing.featuredImage;
 
     Object.assign(existing, {
       ...updateProductDto,
       category,
-      // featuredImage,
-      // otherImages: images
+      featuredImage,
     })
 
-    return await this.productRepo.save(existing);
+    const savedProduct = await this.productRepo.save(existing);
+
+    await this.uploadGallery(savedProduct, updateProductDto?.gallery);
+
+    return {
+      message: 'Product updated',
+      productId: savedProduct.id,
+    }
   }
 
   async remove(ids: string[]) {
