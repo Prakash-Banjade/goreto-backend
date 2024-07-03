@@ -5,7 +5,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { CategoriesModule } from 'src/categories/categories.module';
 import { ProductsRepository } from './repository/product.repository';
-import { AttributeOptionSkusModule } from './attribute-option-skus/attribute-option-skus.module';
 import { DiscountRepository } from './repository/discount.repository';
 import { ProductImage } from './skus/entities/product-image.entity';
 
@@ -17,7 +16,6 @@ import { ProductImage } from './skus/entities/product-image.entity';
       ProductImage,
     ]),
     CategoriesModule,
-    AttributeOptionSkusModule,
   ],
   controllers: [ProductsController],
   providers: [ProductsService, ProductsRepository, DiscountRepository],
