@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateShippingAddressDto } from './dto/create-shipping-address.dto';
 import { UpdateShippingAddressDto } from './dto/update-shipping-address.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -34,7 +34,14 @@ export class ShippingAddressesService {
       address,
     });
 
-    return this.shippingAddressRepo.save(shippingAddress);
+    await this.shippingAddressRepo.save(shippingAddress);
+    return {
+      message: 'Address created',
+      address: {
+        address1: address.address1,
+        address2: address.address2,
+      }
+    }
   }
 
   async findAll(currentUser: AuthUser) {
@@ -49,7 +56,7 @@ export class ShippingAddressesService {
       where: { id, user: { id: currentUser.userId } },
       relations: { address: true, user: true },
     });
-    if (!existingAddress) throw new Error('Address not found');
+    if (!existingAddress) throw new NotFoundException('Address not found');
 
     return existingAddress;
   }

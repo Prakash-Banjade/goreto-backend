@@ -7,9 +7,9 @@ export abstract class BaseEntity {
     @CreateDateColumn()
     createdAt: string;
 
-    @UpdateDateColumn({ nullable: true })
+    @UpdateDateColumn({ nullable: true, select: false })
     updatedAt: string;
 
-    @DeleteDateColumn({ nullable: true })
+    @DeleteDateColumn({ nullable: true, select: false })
     deletedAt: string;
 }

@@ -4,49 +4,61 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { Brackets, Equal, ILike, In, IsNull, Not, Or, Repository } from 'typeorm';
-import { CutTypesService } from 'src/product-filters/cut-types/cut-types.service';
-import { PreparationsService } from 'src/product-filters/preparations/preparations.service';
 import getImageURL from 'src/core/utils/getImageURL';
 import { ProductQueryDto } from './dto/product-query.dto';
 import { Deleted } from 'src/core/dto/query.dto';
 import paginatedData from 'src/core/utils/paginatedData';
+import { CategoriesService } from 'src/categories/categories.service';
 import { FileSystemStoredFile } from 'nestjs-form-data';
-import { generateSlug } from 'src/core/utils/generateSlug';
-import { SubCategoriesService } from 'src/categories/sub-category.service';
+import { ProductImage } from './skus/entities/product-image.entity';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(Product) private readonly productRepo: Repository<Product>,
-    private readonly subCategoryService: SubCategoriesService,
-    private readonly cutTypeService: CutTypesService,
-    private readonly preparationService: PreparationsService
+    @InjectRepository(ProductImage) private readonly productImageRepo: Repository<ProductImage>,
+    private readonly categoryService: CategoriesService,
   ) { }
 
   async create(createProductDto: CreateProductDto) {
-    // evaluate cutType, preparationType, category
-    const dependencies = await this.extractDependencies(createProductDto)
+    // evaluate category
+    const category = await this.categoryService.findOne(createProductDto.categorySlug);
 
-    // evaluate coverImage
-    const coverImage = getImageURL(createProductDto.coverImage);
-
-    // evaluate otherImages
-    let images: string[] = [];
-    if (createProductDto.otherImages) {
-      images = createProductDto.otherImages.map(image => getImageURL(image));
-    }
-
-    const slug = generateSlug(createProductDto.productName)
+    // evaluate featuredImage
+    const featuredImage = getImageURL(createProductDto.featuredImage);
 
     const product = this.productRepo.create({
-      ...createProductDto,
-      ...dependencies,
-      coverImage,
-      slug,
-      otherImages: images
+      productName: createProductDto.productName,
+      description: createProductDto.description,
+      slug: createProductDto?.slug,
+      type: createProductDto.productType,
+      price: createProductDto?.price,
+      salePrice: createProductDto?.salesPrice,
+      stockQuantity: createProductDto?.stockQuantity,
+      category,
+      featuredImage,
     });
 
-    return await this.productRepo.save(product);
+    const savedProduct = await this.productRepo.save(product);
+
+    await this.uploadGallery(savedProduct, createProductDto?.gallery);
+
+    return savedProduct;
+
+  }
+
+  async uploadGallery(product: Product, gallery: FileSystemStoredFile[] | string[] | (FileSystemStoredFile | string)[] | undefined) {
+    // evaluate featured images
+    if (gallery) {
+      for (const image of gallery) {
+        const url = getImageURL(image);
+        const newImage = this.productImageRepo.create({
+          url,
+          simpleProduct: product,
+        });
+        await this.productImageRepo.save(newImage);
+      }
+    }
   }
 
   async findAll(queryDto: ProductQueryDto) {
@@ -59,19 +71,17 @@ export class ProductsService {
       .take(queryDto.search ? undefined : queryDto.take)
       .withDeleted()
       .where({ deletedAt })
-      .leftJoinAndSelect("product.subCategory", "subCategory")
-      .leftJoinAndSelect("subCategory.category", "category")
-      .leftJoinAndSelect("product.discount", "discount")
-      .leftJoinAndSelect("product.cutType", "cutType")
-      .leftJoinAndSelect("product.preparation", "preparation")
+      .leftJoinAndSelect("product.category", "category")
+      .leftJoinAndSelect("product.gallery", "gallery")
+      .leftJoinAndSelect("product.skus", "sku")
       .andWhere(new Brackets(qb => {
         qb.where([
           { productName: ILike(`%${queryDto.search ?? ''}%`) },
         ]);
         queryDto.categorySlug && qb.andWhere("category.slug = :categorySlug", { categorySlug: `%${queryDto.categorySlug ?? ''}%` });
-        queryDto.subCategorySlug && qb.andWhere("subCategory.slug = :subCategorySlug", { subCategorySlug: `%${queryDto.subCategorySlug ?? ''}%` });
-        queryDto.priceFrom && qb.andWhere("product.price >= :priceFrom", { priceFrom: queryDto.priceFrom });
-        queryDto.priceTo && qb.andWhere("product.price <= :priceTo", { priceTo: queryDto.priceTo });
+        queryDto.categorySlug && qb.andWhere("subCategory.slug = :categorySlug", { categorySlug: `%${queryDto.categorySlug ?? ''}%` });
+        // queryDto.priceFrom && qb.andWhere("product.price >= :priceFrom", { priceFrom: queryDto.priceFrom });
+        // queryDto.priceTo && qb.andWhere("product.price <= :priceTo", { priceTo: queryDto.priceTo });
         queryDto.ratingFrom && qb.andWhere("product.rating >= :ratingFrom", { ratingFrom: queryDto.ratingFrom });
         queryDto.ratingTo && qb.andWhere("product.rating <= :ratingTo", { ratingTo: queryDto.ratingTo });
         queryDto.stockQuantity && qb.andWhere("product.stockQuantity >= :stockQuantity", { stockQuantity: queryDto.stockQuantity });
@@ -84,10 +94,13 @@ export class ProductsService {
     const existing = await this.productRepo.findOne({
       where: { slug: Equal(slug) },
       relations: {
-        subCategory: true,
-        discount: true,
-        cutType: true,
-        preparation: true,
+        category: true,
+        skus: {
+          attributeOptions: {
+            attribute: true
+          },
+          gallery: true,
+        }
       }
     });
 
@@ -99,26 +112,25 @@ export class ProductsService {
     const existing = await this.findOne(slug);
 
     // evaluate cutType, preparationType, category
-    const dependencies = await this.extractDependencies(updateProductDto, existing)
+    const category = updateProductDto.categorySlug ? await this.categoryService.findOne(updateProductDto.categorySlug) : existing.category;
 
-    // evaluate coverImage
-    const coverImage = updateProductDto.coverImage ? getImageURL(updateProductDto.coverImage) : existing.coverImage;
-
-    // evaluate otherImages
-    // TODO: also handle previously uploaded other images
-    let images: string[] = [];
-    if (updateProductDto.otherImages) {
-      images = updateProductDto.otherImages.map((image: string | FileSystemStoredFile) => getImageURL(image));
-    }
+    // evaluate featuredImage
+    const featuredImage = updateProductDto.featuredImage ? getImageURL(updateProductDto.featuredImage) : existing.featuredImage;
 
     Object.assign(existing, {
       ...updateProductDto,
-      ...dependencies,
-      coverImage,
-      otherImages: images
+      category,
+      featuredImage,
     })
 
-    return await this.productRepo.save(existing);
+    const savedProduct = await this.productRepo.save(existing);
+
+    await this.uploadGallery(savedProduct, updateProductDto?.gallery);
+
+    return {
+      message: 'Product updated',
+      productId: savedProduct.id,
+    }
   }
 
   async remove(ids: string[]) {
@@ -149,13 +161,5 @@ export class ProductsService {
     return await this.productRepo.delete({
       deletedAt: Not(IsNull())
     })
-  }
-
-  private async extractDependencies(productDto: CreateProductDto | UpdateProductDto, existing?: Product) {
-    const category = productDto.subCategorySlug ? await this.subCategoryService.findOne(productDto.subCategorySlug) : (existing?.subCategory ?? null);
-    const preparation = productDto.preparationTypeId ? await this.preparationService.findOne(productDto.preparationTypeId) : (existing?.preparation ?? null);
-    const cutType = productDto.cutTypeId ? await this.cutTypeService.findOne(productDto.cutTypeId) : (existing?.cutType ?? null);
-
-    return { category, preparation, cutType }
   }
 }

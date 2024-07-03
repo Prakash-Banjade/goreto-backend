@@ -1,6 +1,8 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { Transform } from "class-transformer";
 import { IsNotEmpty, IsOptional, IsString } from "class-validator";
 import { FileSystemStoredFile, HasMimeType, IsFile } from "nestjs-form-data";
+import { generateSlug } from "src/core/utils/generateSlug";
 
 export class CreateCategoryDto {
     @ApiProperty({ type: String, description: 'Category name' })
@@ -8,37 +10,28 @@ export class CreateCategoryDto {
     @IsNotEmpty()
     categoryName: string;
 
-    @ApiProperty({ type: String, format: 'binary', description: 'Category cover image' })
+    @ApiPropertyOptional({ type: String, description: 'Parent category slug' })
+    @IsString()
+    @IsOptional()
+    @Transform(({ value }) => {
+        if (value) return generateSlug(value, false);
+    })
+    slug?: string
+
+    @ApiProperty({ type: String, format: 'binary', description: 'Category featured image' })
     @IsFile()
     @HasMimeType(['image/png', 'image/jpg', 'image/jpeg'])
     @IsNotEmpty()
-    coverImage: FileSystemStoredFile;
+    featuredImage: FileSystemStoredFile;
 
     @ApiProperty({ type: String, description: 'Category description' })
     @IsString()
     @IsNotEmpty()
     description: string;
-}
 
-export class CreateSubCategoryDto {
-    @ApiProperty({ type: String, description: 'Parent category slug' })
-    @IsString()
-    @IsNotEmpty()
-    categorySlug: string;
-
-    @ApiProperty({ type: String, description: 'Sub Category name' })
-    @IsString()
-    @IsNotEmpty()
-    subCategoryName: string;
-
-    @ApiProperty({ type: String, format: 'binary', description: 'Cover image' })
-    @IsFile()
-    @IsOptional()
-    coverImage?: FileSystemStoredFile;
-
-    @ApiProperty({ type: String, description: 'Category description' })
+    @ApiPropertyOptional({ type: String, description: 'Parent category slug' })
     @IsString()
     @IsNotEmpty()
     @IsOptional()
-    description?: string;
+    parentCategorySlug?: string;
 }

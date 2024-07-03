@@ -6,9 +6,10 @@ import { CartsModule } from "src/carts/carts.module";
 import { CategoriesModule } from "src/categories/categories.module";
 import { OrdersModule } from "src/orders/orders.module";
 import { PaymentsModule } from "src/payments/payments.module";
-import { CutTypesModule } from "src/product-filters/cut-types/cut-types.module";
-import { PreparationsModule } from "src/product-filters/preparations/preparations.module";
+import { AttributeOptionsModule } from "src/products/attribute-options/attribute-options.module";
+import { AttributesModule } from "src/products/attributes/attributes.module";
 import { ProductsModule } from "src/products/products.module";
+import { SkusModule } from "src/products/skus/skus.module";
 import { ReviewsModule } from "src/reviews/reviews.module";
 import { ShippingAddressesModule } from "src/shipping-addresses/shipping-addresses.module";
 import { UsersModule } from "src/users/users.module";
@@ -36,13 +37,14 @@ export function setupSwagger(app: INestApplication): void {
             UsersModule,
             ProductsModule,
             CategoriesModule,
-            CutTypesModule,
-            PreparationsModule,
             ShippingAddressesModule,
             CartsModule,
             CartItemsModule,
             ReviewsModule, OrdersModule,
-            PaymentsModule
+            PaymentsModule,
+            SkusModule,
+            AttributesModule,
+            AttributeOptionsModule,
         ],
     });
 
