@@ -66,10 +66,16 @@ export class CategoriesService {
   async update(slug: string, updateCategoryDto: UpdateCategoryDto) {
     const existingCategory = await this.findOne(slug);
 
+    const parentCategory = updateCategoryDto?.parentCategorySlug ? await this.categoriesRepo.findOneBy({ slug: updateCategoryDto.parentCategorySlug }) : existingCategory.parentCategory;
+    if (updateCategoryDto?.parentCategorySlug && !parentCategory) throw new NotFoundException('Parent category not found');
+
     // evaluate featuredImage
     const featuredImage = updateCategoryDto.featuredImage ? getImageURL(updateCategoryDto.featuredImage) : existingCategory.featuredImage;
     Object.assign(existingCategory, { ...updateCategoryDto, featuredImage });
-    return await this.categoriesRepo.save(existingCategory);
+    return await this.categoriesRepo.save({
+      ...existingCategory,
+      parentCategory,
+    });
   }
 
   async remove(slug: string) {
