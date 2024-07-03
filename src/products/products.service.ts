@@ -33,7 +33,7 @@ export class ProductsService {
       slug: createProductDto?.slug,
       productType: createProductDto.productType,
       price: createProductDto?.price,
-      salePrice: createProductDto?.salesPrice,
+      salePrice: createProductDto?.salePrice,
       stockQuantity: createProductDto?.stockQuantity,
       category,
       featuredImage,
