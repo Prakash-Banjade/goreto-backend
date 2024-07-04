@@ -95,6 +95,7 @@ export class ProductsService {
       where: { slug: Equal(slug) },
       relations: {
         category: true,
+        gallery: true,
         skus: {
           attributeOptions: {
             attribute: true
