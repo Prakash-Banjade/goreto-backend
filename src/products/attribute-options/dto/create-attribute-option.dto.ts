@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsUUID } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, IsUUID, IsOptional } from 'class-validator';
 
 export class CreateAttributeOptionDto {
     @ApiProperty({ type: String, description: 'Attribute option value' })
@@ -7,10 +7,11 @@ export class CreateAttributeOptionDto {
     @IsNotEmpty()
     value: string;
 
-    @ApiProperty({ type: String, description: 'Attribute option meta' })
+    @ApiPropertyOptional({ type: String, description: 'Attribute option meta' })
     @IsString()
     @IsNotEmpty()
-    meta: string;
+    @IsOptional()
+    meta?: string;
 
     @ApiProperty({ type: String, format: 'uuid', description: 'Attribute id' })
     @IsUUID()

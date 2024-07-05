@@ -7,8 +7,8 @@ export class AttributeOption extends BaseEntity {
     @Column({ type: 'varchar', length: 255 })
     value: string;
 
-    @Column({ type: 'varchar', length: 255 })
-    meta: string;
+    @Column({ type: 'varchar', length: 255, nullable: true })
+    meta?: string;
 
     @ManyToOne(() => Attribute, attribute => attribute.attributeOptions, { onDelete: 'CASCADE' })
     attribute: Attribute;

@@ -12,7 +12,8 @@ class CreateAttributeOptionDto {
     @ApiProperty({ type: String, description: 'Attribute option meta' })
     @IsString()
     @IsNotEmpty()
-    meta: string;
+    @IsOptional()
+    meta?: string;
 }
 
 export class CreateAttributeDto {
