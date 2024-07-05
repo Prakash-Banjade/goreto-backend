@@ -24,7 +24,8 @@ export class CreateAttributeDto {
     @ApiProperty({ type: String, description: 'Attribute code', example: 'D, S' })
     @IsString()
     @IsNotEmpty()
-    code: string;
+    @IsOptional()
+    code?: string;
 
     @ApiPropertyOptional({ type: [CreateAttributeOptionDto], description: 'Attribute options' })
     @IsArray()
