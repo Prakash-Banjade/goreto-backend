@@ -7,6 +7,11 @@ export class CreateAttributeOptionDto {
     @IsNotEmpty()
     value: string;
 
+    @ApiProperty({ type: String, description: 'Attribute option meta' })
+    @IsString()
+    @IsNotEmpty()
+    meta: string;
+
     @ApiProperty({ type: String, format: 'uuid', description: 'Attribute id' })
     @IsUUID()
     @IsNotEmpty()
