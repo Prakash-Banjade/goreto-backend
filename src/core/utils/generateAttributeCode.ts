@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const LENGTH = 3;
 
 /**
@@ -10,7 +10,7 @@ export function generateAttributeCode(): string {
     let result = '';
     const bytes = crypto.randomBytes(LENGTH);
 
-    for (let i = 0; i < length; i++) {
+    for (let i = 0; i < LENGTH; i++) {
         const randomIndex = bytes[i] % charset.length;
         result += charset[randomIndex];
     }
