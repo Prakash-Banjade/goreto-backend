@@ -44,7 +44,11 @@ export class AttributeService {
   }
 
   async findAll(): Promise<Attribute[]> {
-    return await this.attributeRepo.find();
+    return await this.attributeRepo.find({
+      relations: {
+        attributeOptions: true
+      }
+    });
   }
 
   async findOne(id: string): Promise<Attribute> {
