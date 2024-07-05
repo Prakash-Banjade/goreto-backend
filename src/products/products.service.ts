@@ -43,8 +43,10 @@ export class ProductsService {
 
     await this.uploadGallery(savedProduct, createProductDto?.gallery);
 
-    return savedProduct;
-
+    return {
+      message: 'Product created',
+      productSlug: savedProduct.slug
+    };
   }
 
   async uploadGallery(product: Product, gallery: FileSystemStoredFile[] | string[] | (FileSystemStoredFile | string)[] | undefined) {
@@ -130,7 +132,7 @@ export class ProductsService {
 
     return {
       message: 'Product updated',
-      productId: savedProduct.id,
+      productSlug: savedProduct.slug
     }
   }
 
