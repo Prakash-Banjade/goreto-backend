@@ -45,6 +45,17 @@ export class UsersService {
           cartItems: true,
         },
         account: true,
+      },
+      select: {
+        account: {
+          password: false,
+          email: true,
+          firstName: true,
+          lastName: true,
+          image: true,
+          role: true,
+          isVerified: true,
+        }
       }
     });
     if (!existingUser) throw new NotFoundException('User not found');
