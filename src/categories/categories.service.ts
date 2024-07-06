@@ -69,6 +69,9 @@ export class CategoriesService {
     const parentCategory = updateCategoryDto?.parentCategorySlug ? await this.categoriesRepo.findOneBy({ slug: updateCategoryDto.parentCategorySlug }) : existingCategory.parentCategory;
     if (updateCategoryDto?.parentCategorySlug && !parentCategory) throw new NotFoundException('Parent category not found');
 
+    // VALIDATE PARENT CATEGORY
+    if (updateCategoryDto?.parentCategorySlug && parentCategory?.slug === existingCategory.slug) throw new BadRequestException('Parent category cannot be itself');
+
     // evaluate featuredImage
     const featuredImage = updateCategoryDto.featuredImage ? getImageURL(updateCategoryDto.featuredImage) : existingCategory.featuredImage;
     Object.assign(existingCategory, { ...updateCategoryDto, featuredImage });
