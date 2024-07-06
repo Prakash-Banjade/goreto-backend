@@ -12,6 +12,9 @@ import { Throttle } from '@nestjs/throttler';
 import { ResetPasswordDto } from './dto/resetPassword.dto';
 import { EmailVerificationDto } from './dto/email-verification.dto';
 import { RefreshTokenGuard } from './guards/refresh-token.guard';
+import { CurrentUser } from 'src/core/decorators/currentuser.decorator';
+import { AuthUser } from 'src/core/types/global.types';
+import { ChangePasswordDto } from './dto/changePassword.dto';
 require('dotenv').config();
 
 @ApiTags('Authentication')
@@ -97,6 +100,13 @@ export class AuthController {
         return;
     }
 
+    @Post('changePassword')
+    @HttpCode(HttpStatus.OK)
+    @UseInterceptors(TransactionInterceptor)
+    async changePassword(@Body() changePasswordDto: ChangePasswordDto, @CurrentUser() currentUser: AuthUser) {
+        return await this.authService.changePassword(changePasswordDto, currentUser);
+    }
+
     @Public()
     @Post('forgetPassword')
     @HttpCode(HttpStatus.OK)
@@ -109,9 +119,7 @@ export class AuthController {
     @Post('resetPassword')
     @HttpCode(HttpStatus.OK)
     // @Throttle({ default: { limit: 1, ttl: 5000 } }) // override the default rate limit for password reset
-    resetPassword(@Body() { password, confirmPassword, token }: ResetPasswordDto) {
-        if (password !== confirmPassword) throw new BadRequestException('Passwords do not match');
-
+    resetPassword(@Body() { password, token }: ResetPasswordDto) {
         return this.authService.resetPassword(password, token);
     }
 }
