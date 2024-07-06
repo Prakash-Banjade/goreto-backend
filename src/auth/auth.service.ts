@@ -29,6 +29,7 @@ import { EmailVerificationPending } from './entities/email-verification-pending.
 import { generateHashedOPT } from 'src/core/utils/generateOPT';
 import { AuthRepository } from './repository/auth.repository';
 import { EmailVerificationDto } from './dto/email-verification.dto';
+import { ChangePasswordDto } from './dto/changePassword.dto';
 require('dotenv').config();
 
 @Injectable()
@@ -268,6 +269,21 @@ export class AuthService {
       new_refresh_token,
       payload,
     };
+  }
+
+  async changePassword(changePasswordDto: ChangePasswordDto, currentUser: AuthUser) {
+    const foundAccount = await this.accountsRepo.findOneBy({ email: currentUser.email });
+    if (!foundAccount) throw new NotFoundException('Account not found');
+
+    const isPasswordValid = await bcrypt.compare(changePasswordDto.oldPassword, foundAccount.password);
+    if (!isPasswordValid) throw new BadRequestException('Invalid password');
+
+    foundAccount.password = await bcrypt.hash(changePasswordDto.newPassword, 10);
+    await this.accountRepository.insert(foundAccount);
+
+    return {
+      message: 'Password changed successfully',
+    }
   }
 
   async logout(
