@@ -77,8 +77,8 @@ export class SkusService {
 
   generateSkuCode(attributeOptions: AttributeOption[], productCode: string) {
     const brandCode = CONSTANTS.brandCode;
-    const attributeValue = attributeOptions.map((attributeOption) => attributeOption.value).join('-');
-    const attributeCode = attributeOptions.map((attributeOption) => attributeOption.attribute.code).join('-');
+    const attributeValue = attributeOptions.map((attributeOption) => attributeOption.value).join('-').replaceAll(/\s+/g, '');
+    const attributeCode = attributeOptions.map((attributeOption) => attributeOption.attribute.code).join('-').replaceAll(/\s+/g, '');
 
     return `${brandCode}-${productCode}-${attributeCode}-${attributeValue}`
 
