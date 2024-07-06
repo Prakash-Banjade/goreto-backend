@@ -138,7 +138,6 @@ export class ProductsService {
   }
 
   async remove({ slugs }: DeleteManyWithSlugsDto) {
-    console.log(typeof slugs)
     const existingProducts = await this.productRepo.find({
       where: {
         slug: In(slugs)
