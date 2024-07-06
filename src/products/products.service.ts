@@ -11,6 +11,7 @@ import paginatedData from 'src/core/utils/paginatedData';
 import { CategoriesService } from 'src/categories/categories.service';
 import { FileSystemStoredFile } from 'nestjs-form-data';
 import { ProductImage } from './skus/entities/product-image.entity';
+import { DeleteManyWithSlugsDto } from 'src/core/dto/deleteManyDto';
 
 @Injectable()
 export class ProductsService {
@@ -136,12 +137,14 @@ export class ProductsService {
     }
   }
 
-  async remove(ids: string[]) {
+  async remove({ slugs }: DeleteManyWithSlugsDto) {
+    console.log(typeof slugs)
     const existingProducts = await this.productRepo.find({
       where: {
-        id: In(ids)
+        slug: In(slugs)
       },
     });
+    if (!existingProducts?.length) throw new BadRequestException('Product not found');
     await this.productRepo.softRemove(existingProducts);
 
     return {
@@ -150,14 +153,14 @@ export class ProductsService {
     }
   }
 
-  async restore(ids: string[]) {
+  async restore({ slugs }: DeleteManyWithSlugsDto) {
     const existingProducts = await this.productRepo.find({
-      where: { id: In(ids) },
+      where: { slug: In(slugs) },
       withDeleted: true,
     })
     if (!existingProducts) throw new BadRequestException('Product not found');
 
-    return await this.productRepo.restore(ids);
+    return await this.productRepo.restore(slugs);
   }
 
   async clearTrash() {
