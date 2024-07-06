@@ -30,6 +30,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { StripeModule } from './stripe/stripe.module';
 import { MailModule } from './mail/mail.module';
 import { ConfigModule } from '@nestjs/config';
+import { AppSettingsModule } from './app-settings/app-settings.module';
 
 @Module({
   imports: [
@@ -77,7 +78,8 @@ import { ConfigModule } from '@nestjs/config';
     ReviewsModule,
     OrdersModule,
     PaymentsModule,
-    MailModule
+    MailModule,
+    AppSettingsModule
   ],
   controllers: [AppController],
   providers: [
