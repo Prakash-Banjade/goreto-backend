@@ -44,6 +44,7 @@ export class CategoriesService {
     queryBuilder
       .orderBy("category.createdAt", queryDto.order)
       .leftJoinAndSelect("category.parentCategory", "parentCategory")
+      .loadRelationCountAndMap("category.totalProducts", "category.products")
       .andWhere(new Brackets(qb => {
         qb.where([
           { categoryName: ILike(`%${queryDto.search ?? ''}%`) },
@@ -66,7 +67,7 @@ export class CategoriesService {
   async update(slug: string, updateCategoryDto: UpdateCategoryDto) {
     const existingCategory = await this.findOne(slug);
 
-    const parentCategory = updateCategoryDto?.parentCategorySlug ? await this.categoriesRepo.findOneBy({ slug: updateCategoryDto.parentCategorySlug }) : existingCategory.parentCategory;
+    const parentCategory = !!updateCategoryDto?.parentCategorySlug ? await this.categoriesRepo.findOneBy({ slug: updateCategoryDto.parentCategorySlug }) : null;
     if (updateCategoryDto?.parentCategorySlug && !parentCategory) throw new NotFoundException('Parent category not found');
 
     // VALIDATE PARENT CATEGORY
