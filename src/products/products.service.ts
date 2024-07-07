@@ -87,27 +87,11 @@ export class ProductsService {
       categoryIds = categories.map(cat => cat.id);
     }
 
-    // Subquery to calculate stock quantity for variable products
-    const stockQuantitySubQuery = this.productRepo.createQueryBuilder('subProduct')
-      .select('SUM(sku.stockQuantity)', 'sumStockQuantity')
-      .leftJoin('subProduct.skus', 'sku')
-      .where('subProduct.id = product.id')
-      .getQuery();
-
     queryBuilder
-      .select([
-        'product',
-        'category',
-        'gallery',
-        'sku',
-        `CASE
-                WHEN product.productType = '${ProductType.VARIABLE}' THEN (${stockQuantitySubQuery})
-                ELSE product.stockQuantity
-            END AS stockQuantity`
-      ])
-      .leftJoin("product.category", "category")
-      .leftJoin("product.gallery", "gallery")
-      .leftJoin("product.skus", "sku")
+      .leftJoinAndSelect("product.category", "category")
+      .leftJoinAndSelect("product.gallery", "gallery")
+      .leftJoinAndSelect("product.skus", "sku")
+      .leftJoinAndSelect("product.reviews", "reviews")
       .orderBy("product.createdAt", queryDto.order)
       .skip(queryDto.search ? undefined : queryDto.skip)
       .take(queryDto.search ? undefined : queryDto.take)
