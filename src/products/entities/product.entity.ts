@@ -1,7 +1,7 @@
 import { Category } from "src/categories/entities/category.entity";
 import { CONSTANTS } from "src/core/CONSTANTS";
 import { BaseEntity } from "src/core/entities/base.entity";
-import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany } from "typeorm";
+import { AfterLoad, BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany } from "typeorm";
 import { Review } from "src/reviews/entities/review.entity";
 import { Sku } from "../skus/entities/sku.entity";
 import { generateSlug } from "src/core/utils/generateSlug";
@@ -37,7 +37,7 @@ export class Product extends BaseEntity {
     description: string
 
     @Column({ type: 'enum', enum: ProductType, default: ProductType.VARIABLE })
-    type: ProductType
+    productType: ProductType
 
     @Column({ type: 'varchar', default: CONSTANTS.defaultProductPriceUnit })
     priceUnit: string
@@ -60,7 +60,7 @@ export class Product extends BaseEntity {
     @BeforeInsert()
     @BeforeUpdate()
     refactorByType() {
-        if (this.type === ProductType.VARIABLE) {
+        if (this.productType === ProductType.VARIABLE) {
             this.price = null;
             this.salePrice = null;
             this.discountPercentage = 0;
@@ -96,7 +96,7 @@ export class Product extends BaseEntity {
     @BeforeInsert()
     @BeforeUpdate()
     calculageDiscountPercentage() {
-        if (this.salePrice && this.type === ProductType.SIMPLE) {
+        if (this.salePrice && this.productType === ProductType.SIMPLE) {
             this.discountPercentage = (this.price - this.salePrice) / this.price * 100
         } else {
             this.salePrice = this.price
@@ -114,4 +114,11 @@ export class Product extends BaseEntity {
 
     @OneToMany(() => OrderItem, orderItem => orderItem.simpleProduct, { nullable: true })
     orderItems: OrderItem[]
+
+    @AfterLoad()
+    setStockQuantityForVariableType(){
+        if(this.productType === ProductType.VARIABLE){
+            this.stockQuantity = this?.skus?.reduce((acc, sku) => acc + sku?.stockQuantity, 0) ?? 0
+        }
+    }
 }

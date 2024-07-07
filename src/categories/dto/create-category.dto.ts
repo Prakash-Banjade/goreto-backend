@@ -31,7 +31,6 @@ export class CreateCategoryDto {
 
     @ApiPropertyOptional({ type: String, description: 'Parent category slug' })
     @IsString()
-    @IsNotEmpty()
     @IsOptional()
     parentCategorySlug?: string;
 }

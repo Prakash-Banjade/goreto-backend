@@ -11,11 +11,15 @@ import paginatedData from 'src/core/utils/paginatedData';
 import { CategoriesService } from 'src/categories/categories.service';
 import { FileSystemStoredFile } from 'nestjs-form-data';
 import { ProductImage } from './skus/entities/product-image.entity';
+import { DeleteManyWithSlugsDto } from 'src/core/dto/deleteManyDto';
+import { Category } from 'src/categories/entities/category.entity';
+import { ProductType } from 'src/core/types/global.types';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(Product) private readonly productRepo: Repository<Product>,
+    @InjectRepository(Category) private readonly categoriesRepo: Repository<Category>,
     @InjectRepository(ProductImage) private readonly productImageRepo: Repository<ProductImage>,
     private readonly categoryService: CategoriesService,
   ) { }
@@ -31,9 +35,9 @@ export class ProductsService {
       productName: createProductDto.productName,
       description: createProductDto.description,
       slug: createProductDto?.slug,
-      type: createProductDto.productType,
+      productType: createProductDto.productType,
       price: createProductDto?.price,
-      salePrice: createProductDto?.salesPrice,
+      salePrice: createProductDto?.salePrice,
       stockQuantity: createProductDto?.stockQuantity,
       category,
       featuredImage,
@@ -43,8 +47,10 @@ export class ProductsService {
 
     await this.uploadGallery(savedProduct, createProductDto?.gallery);
 
-    return savedProduct;
-
+    return {
+      message: 'Product created',
+      productSlug: savedProduct.slug
+    };
   }
 
   async uploadGallery(product: Product, gallery: FileSystemStoredFile[] | string[] | (FileSystemStoredFile | string)[] | undefined) {
@@ -65,36 +71,52 @@ export class ProductsService {
     const queryBuilder = this.productRepo.createQueryBuilder('product');
     const deletedAt = queryDto.deleted === Deleted.ONLY ? Not(IsNull()) : queryDto.deleted === Deleted.NONE ? IsNull() : Or(IsNull(), Not(IsNull()));
 
+    const category = await this.categoriesRepo
+      .createQueryBuilder('category')
+      .where('category.slug = :slug', { slug: queryDto.categorySlug })
+      .getOne();
+
+    let categoryIds: string[] = [];
+
+    if (category) {
+      const categories = await this.categoriesRepo
+        .createQueryBuilder('category')
+        .where('category.left BETWEEN :left AND :right', { left: category.left, right: category.right })
+        .getMany();
+
+      categoryIds = categories.map(cat => cat.id);
+    }
+
     queryBuilder
+      .leftJoinAndSelect("product.category", "category")
+      .leftJoinAndSelect("product.gallery", "gallery")
+      .leftJoinAndSelect("product.skus", "sku")
+      .leftJoinAndSelect("product.reviews", "reviews")
       .orderBy("product.createdAt", queryDto.order)
       .skip(queryDto.search ? undefined : queryDto.skip)
       .take(queryDto.search ? undefined : queryDto.take)
       .withDeleted()
       .where({ deletedAt })
-      .leftJoinAndSelect("product.category", "category")
-      .leftJoinAndSelect("product.gallery", "gallery")
-      .leftJoinAndSelect("product.skus", "sku")
       .andWhere(new Brackets(qb => {
         qb.where([
           { productName: ILike(`%${queryDto.search ?? ''}%`) },
         ]);
-        queryDto.categorySlug && qb.andWhere("category.slug = :categorySlug", { categorySlug: `%${queryDto.categorySlug ?? ''}%` });
-        queryDto.categorySlug && qb.andWhere("subCategory.slug = :categorySlug", { categorySlug: `%${queryDto.categorySlug ?? ''}%` });
-        // queryDto.priceFrom && qb.andWhere("product.price >= :priceFrom", { priceFrom: queryDto.priceFrom });
-        // queryDto.priceTo && qb.andWhere("product.price <= :priceTo", { priceTo: queryDto.priceTo });
+        queryDto.categorySlug && qb.andWhere('category.id IN (:...categoryIds)', { categoryIds });
         queryDto.ratingFrom && qb.andWhere("product.rating >= :ratingFrom", { ratingFrom: queryDto.ratingFrom });
         queryDto.ratingTo && qb.andWhere("product.rating <= :ratingTo", { ratingTo: queryDto.ratingTo });
-        queryDto.stockQuantity && qb.andWhere("product.stockQuantity >= :stockQuantity", { stockQuantity: queryDto.stockQuantity });
-      }))
+      }));
 
     return paginatedData(queryDto, queryBuilder);
   }
+
 
   async findOne(slug: string) {
     const existing = await this.productRepo.findOne({
       where: { slug: Equal(slug) },
       relations: {
         category: true,
+        gallery: true,
+        reviews: true,
         skus: {
           attributeOptions: {
             attribute: true
@@ -129,16 +151,17 @@ export class ProductsService {
 
     return {
       message: 'Product updated',
-      productId: savedProduct.id,
+      productSlug: savedProduct.slug
     }
   }
 
-  async remove(ids: string[]) {
+  async remove({ slugs }: DeleteManyWithSlugsDto) {
     const existingProducts = await this.productRepo.find({
       where: {
-        id: In(ids)
+        slug: In(slugs)
       },
     });
+    if (!existingProducts?.length) throw new BadRequestException('Product not found');
     await this.productRepo.softRemove(existingProducts);
 
     return {
@@ -147,14 +170,14 @@ export class ProductsService {
     }
   }
 
-  async restore(ids: string[]) {
+  async restore({ slugs }: DeleteManyWithSlugsDto) {
     const existingProducts = await this.productRepo.find({
-      where: { id: In(ids) },
+      where: { slug: In(slugs) },
       withDeleted: true,
     })
     if (!existingProducts) throw new BadRequestException('Product not found');
 
-    return await this.productRepo.restore(ids);
+    return await this.productRepo.restore(slugs);
   }
 
   async clearTrash() {

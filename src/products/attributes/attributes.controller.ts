@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors } from '@nestjs/common';
 import { CreateAttributeDto } from './dto/create-attribute.dto';
 import { UpdateAttributeDto } from './dto/update-attribute.dto';
 import { AttributeService } from './attributes.service';
 import { ApiTags } from '@nestjs/swagger';
 import { Action } from 'src/core/types/global.types';
 import { ChekcAbilities } from 'src/core/decorators/abilities.decorator';
+import { TransactionInterceptor } from 'src/core/interceptors/transaction.interceptor';
 
 @ApiTags('Attributes')
 @Controller('attributes')
@@ -12,6 +13,7 @@ export class AttributesController {
   constructor(private readonly attributesService: AttributeService) { }
 
   @Post()
+  @UseInterceptors(TransactionInterceptor)
   @ChekcAbilities({ action: Action.CREATE, subject: 'all' })
   async create(@Body() createAttributeDto: CreateAttributeDto) {
     return this.attributesService.create(createAttributeDto);

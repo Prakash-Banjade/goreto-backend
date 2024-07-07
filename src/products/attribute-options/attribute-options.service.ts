@@ -5,17 +5,21 @@ import { CreateAttributeOptionDto } from './dto/create-attribute-option.dto';
 import { AttributeOption } from './entities/attribute-option.entity';
 import { AttributeService } from '../attributes/attributes.service';
 import { UpdateAttributeOptionDto } from './dto/update-attribute-option.dto';
+import { AttributeOptionsRepository } from './repository/attribute-options.reposityr';
 
 @Injectable()
 export class AttributeOptionService {
   constructor(
     @InjectRepository(AttributeOption) private readonly attributeOptionRepo: Repository<AttributeOption>,
-    private readonly attributeService: AttributeService
+    private readonly attributeService: AttributeService,
   ) { }
 
   async create(createAttributeOptionDto: CreateAttributeOptionDto): Promise<AttributeOption> {
-    const existing = await this.attributeOptionRepo.findOne({ where: { value: createAttributeOptionDto.value, attribute: { id: createAttributeOptionDto.attributeId } } });
-    if (existing) throw new BadRequestException('Attribute option already exists');
+    const existing = await this.attributeOptionRepo.findOne({ where: [
+      { value: createAttributeOptionDto.value, attribute: { id: createAttributeOptionDto.attributeId } },
+      { meta: createAttributeOptionDto.meta, attribute: { id: createAttributeOptionDto.attributeId } },
+    ] });
+    if (existing) throw new BadRequestException('Attribute option with same value or meta already exists');
 
     const attribute = await this.attributeService.findOne(createAttributeOptionDto.attributeId);
 

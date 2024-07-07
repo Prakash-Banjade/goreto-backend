@@ -69,7 +69,7 @@ export class CreateProductDto {
         if (isNaN(Number(value))) throw new BadRequestException('Product sales price must be a real number');
         return Number(value);
     })
-    salesPrice?: number;
+    salePrice?: number;
 
     @ApiProperty({ type: Number, description: "Product stock quantity" })
     @IsNotEmpty()

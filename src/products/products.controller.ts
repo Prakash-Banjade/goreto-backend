@@ -9,6 +9,7 @@ import { Action } from 'src/core/types/global.types';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/core/decorators/setPublicRoute.decorator';
 import { FileSystemStoredFile, FormDataRequest } from 'nestjs-form-data';
+import { DeleteManyWithSlugsDto } from 'src/core/dto/deleteManyDto';
 
 @ApiBearerAuth()
 @ApiTags('Products')
@@ -48,15 +49,15 @@ export class ProductsController {
   @Post('deleteMany')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ChekcAbilities({ action: Action.DELETE, subject: 'all' })
-  remove(@Body('ids') ids: string) {
-    return this.productsService.remove(JSON.parse(ids));
+  remove(@Body() slugs: DeleteManyWithSlugsDto) {
+    return this.productsService.remove(slugs);
   }
 
   @Post('restoreMany')
   @ChekcAbilities({ action: Action.RESTORE, subject: 'all' })
   @HttpCode(HttpStatus.OK)
-  restore(@Body('ids') ids: string) {
-    return this.productsService.restore(JSON.parse(ids));
+  restore(@Body() slugs: DeleteManyWithSlugsDto) {
+    return this.productsService.restore(slugs);
   }
 
   @Post('emptyTrash')

@@ -25,7 +25,7 @@ export class SkusService {
     const product = await this.productsService.findOne(createSkuDto.productSlug)
 
     // CHECK IF THE PRODUCT IS VARIABLE
-    if (product.type !== ProductType.VARIABLE) throw new BadRequestException('Product must be variable type');
+    if (product.productType !== ProductType.VARIABLE) throw new BadRequestException('Product must be variable type');
 
     for (const sku of createSkuDto.skus) {
       const attributeOptions = await Promise.all(
@@ -77,8 +77,8 @@ export class SkusService {
 
   generateSkuCode(attributeOptions: AttributeOption[], productCode: string) {
     const brandCode = CONSTANTS.brandCode;
-    const attributeValue = attributeOptions.map((attributeOption) => attributeOption.value).join('-');
-    const attributeCode = attributeOptions.map((attributeOption) => attributeOption.attribute.code).join('-');
+    const attributeValue = attributeOptions.map((attributeOption) => attributeOption.value).join('-').replaceAll(/\s+/g, '');
+    const attributeCode = attributeOptions.map((attributeOption) => attributeOption.attribute.code).join('-').replaceAll(/\s+/g, '');
 
     return `${brandCode}-${productCode}-${attributeCode}-${attributeValue}`
 
