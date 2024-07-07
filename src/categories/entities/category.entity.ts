@@ -14,7 +14,7 @@ export class Category extends BaseEntity {
     @BeforeInsert()
     @BeforeUpdate()
     generateSlug() {
-        if (!this.slug) this.slug = generateSlug(this.categoryName, false);
+        if (!this.slug && this.categoryName) this.slug = generateSlug(this.categoryName, false);
     }
 
     @Column({ type: 'varchar' })
