@@ -1,7 +1,7 @@
 import { Category } from "src/categories/entities/category.entity";
 import { CONSTANTS } from "src/core/CONSTANTS";
 import { BaseEntity } from "src/core/entities/base.entity";
-import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany } from "typeorm";
+import { AfterLoad, BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany } from "typeorm";
 import { Review } from "src/reviews/entities/review.entity";
 import { Sku } from "../skus/entities/sku.entity";
 import { generateSlug } from "src/core/utils/generateSlug";
@@ -114,4 +114,11 @@ export class Product extends BaseEntity {
 
     @OneToMany(() => OrderItem, orderItem => orderItem.simpleProduct, { nullable: true })
     orderItems: OrderItem[]
+
+    @AfterLoad()
+    setStockQuantityForVariableType(){
+        if(this.productType === ProductType.VARIABLE){
+            this.stockQuantity = this?.skus?.reduce((acc, sku) => acc + sku?.stockQuantity, 0) ?? 0
+        }
+    }
 }

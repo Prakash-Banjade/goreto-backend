@@ -13,6 +13,7 @@ import { FileSystemStoredFile } from 'nestjs-form-data';
 import { ProductImage } from './skus/entities/product-image.entity';
 import { DeleteManyWithSlugsDto } from 'src/core/dto/deleteManyDto';
 import { Category } from 'src/categories/entities/category.entity';
+import { ProductType } from 'src/core/types/global.types';
 
 @Injectable()
 export class ProductsService {
@@ -75,11 +76,7 @@ export class ProductsService {
       .where('category.slug = :slug', { slug: queryDto.categorySlug })
       .getOne();
 
-    // if (queryDto.categorySlug && !category) {
-    //   throw new Error('Category not found');
-    // }
-
-    let categoryIds: string[] = []
+    let categoryIds: string[] = [];
 
     if (category) {
       const categories = await this.categoriesRepo
@@ -90,27 +87,44 @@ export class ProductsService {
       categoryIds = categories.map(cat => cat.id);
     }
 
+    // Subquery to calculate stock quantity for variable products
+    const stockQuantitySubQuery = this.productRepo.createQueryBuilder('subProduct')
+      .select('SUM(sku.stockQuantity)', 'sumStockQuantity')
+      .leftJoin('subProduct.skus', 'sku')
+      .where('subProduct.id = product.id')
+      .getQuery();
+
     queryBuilder
+      .select([
+        'product',
+        'category',
+        'gallery',
+        'sku',
+        `CASE
+                WHEN product.productType = '${ProductType.VARIABLE}' THEN (${stockQuantitySubQuery})
+                ELSE product.stockQuantity
+            END AS stockQuantity`
+      ])
+      .leftJoin("product.category", "category")
+      .leftJoin("product.gallery", "gallery")
+      .leftJoin("product.skus", "sku")
       .orderBy("product.createdAt", queryDto.order)
       .skip(queryDto.search ? undefined : queryDto.skip)
       .take(queryDto.search ? undefined : queryDto.take)
       .withDeleted()
       .where({ deletedAt })
-      .leftJoinAndSelect("product.category", "category")
-      .leftJoinAndSelect("product.gallery", "gallery")
-      .leftJoinAndSelect("product.skus", "sku")
       .andWhere(new Brackets(qb => {
         qb.where([
           { productName: ILike(`%${queryDto.search ?? ''}%`) },
         ]);
-        queryDto.categorySlug && qb.andWhere('category.id IN (:...categoryIds)', { categoryIds })
+        queryDto.categorySlug && qb.andWhere('category.id IN (:...categoryIds)', { categoryIds });
         queryDto.ratingFrom && qb.andWhere("product.rating >= :ratingFrom", { ratingFrom: queryDto.ratingFrom });
         queryDto.ratingTo && qb.andWhere("product.rating <= :ratingTo", { ratingTo: queryDto.ratingTo });
-        queryDto.stockQuantity && qb.andWhere("product.stockQuantity >= :stockQuantity", { stockQuantity: queryDto.stockQuantity });
-      }))
+      }));
 
     return paginatedData(queryDto, queryBuilder);
   }
+
 
   async findOne(slug: string) {
     const existing = await this.productRepo.findOne({
