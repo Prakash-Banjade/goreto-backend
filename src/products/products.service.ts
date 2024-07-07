@@ -81,8 +81,7 @@ export class ProductsService {
         qb.where([
           { productName: ILike(`%${queryDto.search ?? ''}%`) },
         ]);
-        queryDto.categorySlug && qb.andWhere("category.slug = :categorySlug", { categorySlug: `%${queryDto.categorySlug ?? ''}%` });
-        queryDto.categorySlug && qb.andWhere("subCategory.slug = :categorySlug", { categorySlug: `%${queryDto.categorySlug ?? ''}%` });
+        queryDto.categorySlug && qb.andWhere("category.slug = :categorySlug", { categorySlug: queryDto.categorySlug ?? '' });
         // queryDto.priceFrom && qb.andWhere("product.price >= :priceFrom", { priceFrom: queryDto.priceFrom });
         // queryDto.priceTo && qb.andWhere("product.price <= :priceTo", { priceTo: queryDto.priceTo });
         queryDto.ratingFrom && qb.andWhere("product.rating >= :ratingFrom", { ratingFrom: queryDto.ratingFrom });
