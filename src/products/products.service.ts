@@ -12,11 +12,13 @@ import { CategoriesService } from 'src/categories/categories.service';
 import { FileSystemStoredFile } from 'nestjs-form-data';
 import { ProductImage } from './skus/entities/product-image.entity';
 import { DeleteManyWithSlugsDto } from 'src/core/dto/deleteManyDto';
+import { Category } from 'src/categories/entities/category.entity';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(Product) private readonly productRepo: Repository<Product>,
+    @InjectRepository(Category) private readonly categoriesRepo: Repository<Category>,
     @InjectRepository(ProductImage) private readonly productImageRepo: Repository<ProductImage>,
     private readonly categoryService: CategoriesService,
   ) { }
@@ -68,6 +70,26 @@ export class ProductsService {
     const queryBuilder = this.productRepo.createQueryBuilder('product');
     const deletedAt = queryDto.deleted === Deleted.ONLY ? Not(IsNull()) : queryDto.deleted === Deleted.NONE ? IsNull() : Or(IsNull(), Not(IsNull()));
 
+    const category = await this.categoriesRepo
+      .createQueryBuilder('category')
+      .where('category.slug = :slug', { slug: queryDto.categorySlug })
+      .getOne();
+
+    // if (queryDto.categorySlug && !category) {
+    //   throw new Error('Category not found');
+    // }
+
+    let categoryIds: string[] = []
+
+    if (category) {
+      const categories = await this.categoriesRepo
+        .createQueryBuilder('category')
+        .where('category.left BETWEEN :left AND :right', { left: category.left, right: category.right })
+        .getMany();
+
+      categoryIds = categories.map(cat => cat.id);
+    }
+
     queryBuilder
       .orderBy("product.createdAt", queryDto.order)
       .skip(queryDto.search ? undefined : queryDto.skip)
@@ -81,9 +103,7 @@ export class ProductsService {
         qb.where([
           { productName: ILike(`%${queryDto.search ?? ''}%`) },
         ]);
-        queryDto.categorySlug && qb.andWhere("category.slug = :categorySlug", { categorySlug: queryDto.categorySlug ?? '' });
-        // queryDto.priceFrom && qb.andWhere("product.price >= :priceFrom", { priceFrom: queryDto.priceFrom });
-        // queryDto.priceTo && qb.andWhere("product.price <= :priceTo", { priceTo: queryDto.priceTo });
+        queryDto.categorySlug && qb.andWhere('category.id IN (:...categoryIds)', { categoryIds })
         queryDto.ratingFrom && qb.andWhere("product.rating >= :ratingFrom", { ratingFrom: queryDto.ratingFrom });
         queryDto.ratingTo && qb.andWhere("product.rating <= :ratingTo", { ratingTo: queryDto.ratingTo });
         queryDto.stockQuantity && qb.andWhere("product.stockQuantity >= :stockQuantity", { stockQuantity: queryDto.stockQuantity });
@@ -98,6 +118,7 @@ export class ProductsService {
       relations: {
         category: true,
         gallery: true,
+        reviews: true,
         skus: {
           attributeOptions: {
             attribute: true

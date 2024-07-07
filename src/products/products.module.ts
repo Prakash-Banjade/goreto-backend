@@ -7,6 +7,7 @@ import { CategoriesModule } from 'src/categories/categories.module';
 import { ProductsRepository } from './repository/product.repository';
 import { DiscountRepository } from './repository/discount.repository';
 import { ProductImage } from './skus/entities/product-image.entity';
+import { Category } from 'src/categories/entities/category.entity';
 
 @Global()
 @Module({
@@ -14,6 +15,7 @@ import { ProductImage } from './skus/entities/product-image.entity';
     TypeOrmModule.forFeature([
       Product,
       ProductImage,
+      Category,
     ]),
     CategoriesModule,
   ],

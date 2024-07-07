@@ -23,8 +23,47 @@ export class CategoriesService {
     });
     if (existingCategory) throw new ConflictException('Category with same name or slug already exists');
 
-    const parentCategory = createCategoryDto?.parentCategorySlug ? await this.categoriesRepo.findOneBy({ slug: createCategoryDto.parentCategorySlug }) : null;
-    if (createCategoryDto?.parentCategorySlug && !parentCategory) throw new NotFoundException('Parent category not found');
+    const parentSlug = createCategoryDto?.parentCategorySlug
+
+    let parentCategory: Category | null = null
+    let left: number;
+    let right: number;
+
+    if (parentSlug) {
+      parentCategory = await this.categoriesRepo
+        .createQueryBuilder('category')
+        .where('category.slug = :slug', { slug: parentSlug })
+        .getOne();
+
+      if (!parentCategory) {
+        throw new Error('Parent category not found');
+      }
+
+      left = parentCategory.right;
+      right = left + 1;
+
+      // Use backticks around `right` and `left`
+      await this.categoriesRepo.query(
+        `UPDATE category SET \`right\` = \`right\` + 2 WHERE \`right\` >= ?`,
+        [left]
+      );
+      await this.categoriesRepo.query(
+        `UPDATE category SET \`left\` = \`left\` + 2 WHERE \`left\` >= ?`,
+        [left]
+      );
+    } else {
+      const maxRight = await this.categoriesRepo
+        .createQueryBuilder('category')
+        .select('MAX(category.right)', 'maxRight')
+        .getRawOne();
+
+      left = (maxRight?.maxRight || 0) + 1;
+      right = left + 1;
+    }
+
+
+    // const parentCategory = createCategoryDto?.parentCategorySlug ? await this.categoriesRepo.findOneBy({ slug: createCategoryDto.parentCategorySlug }) : null;
+    // if (createCategoryDto?.parentCategorySlug && !parentCategory) throw new NotFoundException('Parent category not found');
 
     // evaluate featuredImage
     const featuredImage = getImageURL(createCategoryDto.featuredImage);
@@ -33,6 +72,8 @@ export class CategoriesService {
       ...createCategoryDto,
       featuredImage,
       parentCategory,
+      left,
+      right,
     });
 
     return await this.categoriesRepo.save(newCategory);
