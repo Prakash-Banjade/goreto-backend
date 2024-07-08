@@ -101,7 +101,7 @@ export class ProductsService {
         qb.where([
           { productName: ILike(`%${queryDto.search ?? ''}%`) },
         ]);
-        queryDto.categorySlug && qb.andWhere('category.id IN (:...categoryIds)', { categoryIds });
+        category && qb.andWhere('category.id IN (:...categoryIds)', { categoryIds });
         queryDto.ratingFrom && qb.andWhere("product.rating >= :ratingFrom", { ratingFrom: queryDto.ratingFrom });
         queryDto.ratingTo && qb.andWhere("product.rating <= :ratingTo", { ratingTo: queryDto.ratingTo });
       }));
