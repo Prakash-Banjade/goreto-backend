@@ -13,7 +13,6 @@ import { FileSystemStoredFile } from 'nestjs-form-data';
 import { ProductImage } from './skus/entities/product-image.entity';
 import { DeleteManyWithSlugsDto } from 'src/core/dto/deleteManyDto';
 import { Category } from 'src/categories/entities/category.entity';
-import { ProductType } from 'src/core/types/global.types';
 
 @Injectable()
 export class ProductsService {
