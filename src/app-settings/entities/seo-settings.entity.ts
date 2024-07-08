@@ -7,6 +7,9 @@ export class SeoSetting extends BaseEntity {
     metaTitle: string;
 
     @Column({ type: 'longtext' })
+    metaTags: string;
+
+    @Column({ type: 'longtext' })
     metaDescription: string;
 
     @Column({ type: 'varchar', default: '' })

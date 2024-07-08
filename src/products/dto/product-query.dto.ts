@@ -1,5 +1,5 @@
 import { BadRequestException } from "@nestjs/common";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import { IsOptional, IsString } from "class-validator";
 import { QueryDto } from "src/core/dto/query.dto";
@@ -9,11 +9,6 @@ export class ProductQueryDto extends QueryDto {
     @IsString()
     @IsOptional()
     categorySlug?: string;
-
-    @ApiPropertyOptional({ type: String, description: 'Product sub category slug' })
-    @IsString()
-    @IsOptional()
-    subCategorySlug?: string;
 
     @ApiPropertyOptional({ type: String, description: 'Product price to' })
     @Transform(({ value }) => {

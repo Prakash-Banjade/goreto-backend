@@ -2,16 +2,18 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
-import { Brackets, ILike, Repository } from 'typeorm';
+import { Brackets, ILike, IsNull, Repository, SelectQueryBuilder } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import getImageURL from 'src/core/utils/getImageURL';
 import { CategoryQueryDto } from './dto/category-query.dto';
 import paginatedData from 'src/core/utils/paginatedData';
+import { Product } from 'src/products/entities/product.entity';
 
 @Injectable()
 export class CategoriesService {
   constructor(
-    @InjectRepository(Category) private readonly categoriesRepo: Repository<Category>
+    @InjectRepository(Category) private readonly categoriesRepo: Repository<Category>,
+    @InjectRepository(Product) private readonly productRepo: Repository<Product>,
   ) { }
 
   async create(createCategoryDto: CreateCategoryDto) {
@@ -76,23 +78,33 @@ export class CategoriesService {
       right,
     });
 
+    // increase totalProductCount of parentcategory
+    if (parentCategory) {
+      parentCategory.totalProductsCount += 1;
+      await this.categoriesRepo.save(parentCategory);
+    }
+
     return await this.categoriesRepo.save(newCategory);
   }
 
   async findAll(queryDto: CategoryQueryDto) {
-    const queryBuilder = this.categoriesRepo.createQueryBuilder('category');
+    const qb = this.categoriesRepo.createQueryBuilder('category');
 
-    queryBuilder
-      .orderBy("category.createdAt", queryDto.order)
-      .leftJoinAndSelect("category.parentCategory", "parentCategory")
-      .loadRelationCountAndMap("category.totalProducts", "category.products")
-      .andWhere(new Brackets(qb => {
-        qb.where([
-          { categoryName: ILike(`%${queryDto.search ?? ''}%`) },
-        ]);
-      }))
+    const categories = await qb
+      .leftJoinAndSelect('category.parentCategory', 'parentCategory')
+      .orderBy('category.createdAt', queryDto.order)
+      .andWhere(
+        new Brackets(qb => {
+          qb.where([{ categoryName: ILike(`%${queryDto.search ?? ''}%`) }]);
+        }),
+      )
+      .andWhere({ parentCategory: IsNull() }).getMany();
 
-    return paginatedData(queryDto, queryBuilder);
+    for (const category of categories) {
+      category.totalProductsCount = await this.getTotalProductsCount(category);
+    }
+
+    return categories;
   }
 
   async findOne(slug: string) {
@@ -102,7 +114,20 @@ export class CategoriesService {
     });
     if (!existingCategory) throw new Error('Category not found');
 
+    existingCategory.totalProductsCount = await this.getTotalProductsCount(existingCategory);
+
     return existingCategory;
+  }
+
+  private async getTotalProductsCount(category: Category): Promise<number> {
+    const qb = this.productRepo.createQueryBuilder('product');
+
+    qb.leftJoin('product.category', 'category')
+      .leftJoin('category.parentCategory', 'parentCategory')
+      .where('category.left BETWEEN :left AND :right', { left: category.left, right: category.right })
+      .orWhere('parentCategory.left BETWEEN :left AND :right', { left: category.left, right: category.right });
+
+    return qb.getCount();
   }
 
   async update(slug: string, updateCategoryDto: UpdateCategoryDto) {

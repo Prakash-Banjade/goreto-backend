@@ -10,6 +10,12 @@ export class SeoSettingsDto {
     @IsOptional()
     metaTitle?: string;
 
+    @ApiPropertyOptional({ type: String, description: 'Meta Tags' })
+    @IsString()
+    @IsNotEmpty()
+    @IsOptional()
+    metaTags?: string;
+
     @ApiPropertyOptional({ type: String, description: 'Meta Description' })
     @IsString()
     @IsNotEmpty()

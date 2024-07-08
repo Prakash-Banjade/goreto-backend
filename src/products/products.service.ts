@@ -13,7 +13,6 @@ import { FileSystemStoredFile } from 'nestjs-form-data';
 import { ProductImage } from './skus/entities/product-image.entity';
 import { DeleteManyWithSlugsDto } from 'src/core/dto/deleteManyDto';
 import { Category } from 'src/categories/entities/category.entity';
-import { ProductType } from 'src/core/types/global.types';
 
 @Injectable()
 export class ProductsService {
@@ -101,7 +100,7 @@ export class ProductsService {
         qb.where([
           { productName: ILike(`%${queryDto.search ?? ''}%`) },
         ]);
-        queryDto.categorySlug && qb.andWhere('category.id IN (:...categoryIds)', { categoryIds });
+        category && qb.andWhere('category.id IN (:...categoryIds)', { categoryIds });
         queryDto.ratingFrom && qb.andWhere("product.rating >= :ratingFrom", { ratingFrom: queryDto.ratingFrom });
         queryDto.ratingTo && qb.andWhere("product.rating <= :ratingTo", { ratingTo: queryDto.ratingTo });
       }));
