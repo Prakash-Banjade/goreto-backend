@@ -10,6 +10,7 @@ import { ProductType } from "src/core/types/global.types";
 import { ProductImage } from "../skus/entities/product-image.entity";
 import { CartItem } from "src/cart-items/entities/cart-item.entity";
 import { OrderItem } from "src/orders/entities/order-item.entity";
+import { BadRequestException } from "@nestjs/common";
 
 @Entity()
 export class Product extends BaseEntity {
@@ -97,6 +98,7 @@ export class Product extends BaseEntity {
     @BeforeUpdate()
     calculageDiscountPercentage() {
         if (this.salePrice && this.productType === ProductType.SIMPLE) {
+            if (this.salePrice > this.price) throw new BadRequestException('Sale price cannot be greater than price')
             this.discountPercentage = (this.price - this.salePrice) / this.price * 100
         } else {
             this.salePrice = this.price
