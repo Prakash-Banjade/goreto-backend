@@ -12,6 +12,10 @@ import { SeoSettingService } from './seo-settings/seo-settings.service';
 import { Faq } from './entities/faq.entity';
 import { FaqController } from './faq/faq.controller';
 import { FaqService } from './faq/faq.service';
+import { LocationSetting } from './entities/location-setting.entity';
+import { Location } from './entities/location.entity';
+import { LocationSettingController } from './location-settings/location-settings.controller';
+import { LocationSettingService } from './location-settings/location-settings.service';
 
 @Module({
   imports: [
@@ -20,19 +24,23 @@ import { FaqService } from './faq/faq.service';
       SeoSetting,
       CompanyInfoSetting,
       Faq,
+      LocationSetting,
+      Location,
     ])
   ],
   controllers: [
     GeneralSettingController,
     CompanyInfoSettingController,
     SeoSettingController,
-    FaqController
+    FaqController,
+    LocationSettingController,
   ],
   providers: [
     GeneralSettingService,
     CompanyInfoSettingService,
     SeoSettingService,
-    FaqService
+    FaqService,
+    LocationSettingService,
   ],
 })
 export class AppSettingsModule { }
