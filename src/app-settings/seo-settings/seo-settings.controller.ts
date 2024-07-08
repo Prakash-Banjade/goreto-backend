@@ -3,6 +3,7 @@ import { ApiConsumes, ApiTags } from "@nestjs/swagger";
 import { SeoSettingService } from "./seo-settings.service";
 import { SeoSettingsDto } from "../dto/seo-settings.dto";
 import { FileSystemStoredFile, FormDataRequest } from "nestjs-form-data";
+import { Public } from "src/core/decorators/setPublicRoute.decorator";
 
 @ApiTags('Seo Settings')
 @Controller('seo-settings')
@@ -18,6 +19,7 @@ export class SeoSettingController {
         return await this.seoSettingService.set(seoSettingsDto);
     }
 
+    @Public()
     @Get()
     async get() {
         return await this.seoSettingService.get();

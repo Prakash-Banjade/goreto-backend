@@ -3,6 +3,7 @@ import { ApiConsumes, ApiTags } from "@nestjs/swagger";
 import { GeneralSettingService } from "./general-settings.service";
 import { GeneralSettingsDto } from "../dto/general-settings.dto";
 import { FileSystemStoredFile, FormDataRequest } from "nestjs-form-data";
+import { Public } from "src/core/decorators/setPublicRoute.decorator";
 
 @ApiTags('General Settings')
 @Controller('general-settings')
@@ -18,6 +19,7 @@ export class GeneralSettingController {
         return await this.generalSettingService.set(generalSettingsDto);
     }
 
+    @Public()
     @Get()
     async get() {
         return await this.generalSettingService.get();
