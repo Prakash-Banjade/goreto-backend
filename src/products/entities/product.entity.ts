@@ -58,16 +58,16 @@ export class Product extends BaseEntity {
     @Column({ type: 'real', default: 0 })
     rating: number
 
-    @BeforeInsert()
-    @BeforeUpdate()
-    refactorByType() {
-        if (this.productType === ProductType.VARIABLE) {
-            this.price = null;
-            this.salePrice = null;
-            this.discountPercentage = 0;
-            this.stockQuantity = 0;
-        }
-    }
+    // @BeforeInsert()
+    // @BeforeUpdate()
+    // refactorByType() {
+    //     if (this.productType === ProductType.VARIABLE) {
+    //         this.price = null;
+    //         this.salePrice = null;
+    //         this.discountPercentage = 0;
+    //         this.stockQuantity = 0;
+    //     }
+    // }
 
     /**
     |--------------------------------------------------
@@ -85,42 +85,42 @@ export class Product extends BaseEntity {
     |--------------------------------------------------
     */
 
-    @Column({ type: 'real', precision: 10, scale: 2, nullable: true })
-    price: number
+    // @Column({ type: 'real', precision: 10, scale: 2, nullable: true })
+    // price: number
 
-    @Column({ type: 'real', nullable: true })
-    salePrice?: number;
+    // @Column({ type: 'real', nullable: true })
+    // salePrice?: number;
 
-    @Column({ type: 'real', default: 0, scale: 2, precision: 10 })
-    discountPercentage?: number;
+    // @Column({ type: 'real', default: 0, scale: 2, precision: 10 })
+    // discountPercentage?: number;
 
-    @BeforeInsert()
-    @BeforeUpdate()
-    calculageDiscountPercentage() {
-        if (this.salePrice && this.productType === ProductType.SIMPLE) {
-            if (this.salePrice > this.price) throw new BadRequestException('Sale price cannot be greater than price')
-            this.discountPercentage = (this.price - this.salePrice) / this.price * 100
-        } else {
-            this.salePrice = this.price
-        }
-    }
+    // @BeforeInsert()
+    // @BeforeUpdate()
+    // calculageDiscountPercentage() {
+    //     if (this.salePrice && this.productType === ProductType.SIMPLE) {
+    //         if (this.salePrice > this.price) throw new BadRequestException('Sale price cannot be greater than price')
+    //         this.discountPercentage = (this.price - this.salePrice) / this.price * 100
+    //     } else {
+    //         this.salePrice = this.price
+    //     }
+    // }
 
-    @Column({ type: 'int', default: 0 })
-    stockQuantity: number;
+    // @Column({ type: 'int', default: 0 })
+    // stockQuantity: number;
 
-    @Column({ type: 'int', default: 0 })
-    soldCount: number
+    // @Column({ type: 'int', default: 0 })
+    // soldCount: number
 
-    @OneToMany(() => CartItem, cartItem => cartItem.simpleProduct, { nullable: true })
-    cartItems: CartItem[]
+    // @OneToMany(() => CartItem, cartItem => cartItem.simpleProduct, { nullable: true })
+    // cartItems: CartItem[]
 
-    @OneToMany(() => OrderItem, orderItem => orderItem.simpleProduct, { nullable: true })
-    orderItems: OrderItem[]
+    // @OneToMany(() => OrderItem, orderItem => orderItem.simpleProduct, { nullable: true })
+    // orderItems: OrderItem[]
 
-    @AfterLoad()
-    setStockQuantityForVariableType(){
-        if(this.productType === ProductType.VARIABLE){
-            this.stockQuantity = this?.skus?.reduce((acc, sku) => acc + sku?.stockQuantity, 0) ?? 0
-        }
-    }
+    // @AfterLoad()
+    // setStockQuantityForVariableType(){
+    //     if(this.productType === ProductType.VARIABLE){
+    //         this.stockQuantity = this?.skus?.reduce((acc, sku) => acc + sku?.stockQuantity, 0) ?? 0
+    //     }
+    // }
 }

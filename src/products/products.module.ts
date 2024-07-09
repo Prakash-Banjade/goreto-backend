@@ -8,6 +8,7 @@ import { ProductsRepository } from './repository/product.repository';
 import { DiscountRepository } from './repository/discount.repository';
 import { ProductImage } from './skus/entities/product-image.entity';
 import { Category } from 'src/categories/entities/category.entity';
+import { Sku } from './skus/entities/sku.entity';
 
 @Global()
 @Module({
@@ -16,6 +17,7 @@ import { Category } from 'src/categories/entities/category.entity';
       Product,
       ProductImage,
       Category,
+      Sku,
     ]),
     CategoriesModule,
   ],

@@ -25,22 +25,9 @@ export class CartsController {
   // }
 
   @Get()
-  @ChekcAbilities({ action: Action.READ, subject: 'all' })
   @ApiPaginatedResponse(CreateCartDto)
-  async findAll(@Query() queryDto: QueryDto) {
-    return await this.cartsService.findAll(queryDto);
-  }
-
-  @Get('my-cart')
-  @ChekcAbilities({ action: Action.READ, subject: User })
-  async getMyCart(@CurrentUser() currentUser: AuthUser) {    
-    return await this.cartsService.getMyCart(currentUser);
-  }
-
-  @Get(':id')
-  @ChekcAbilities({ action: Action.READ, subject: 'all' })
-  async findOne(@Param('id') id: string) {
-    return await this.cartsService.findOne(id);
+  async findMyCart(@CurrentUser() currentUser: AuthUser) {
+    return await this.cartsService.findMyCart(currentUser);
   }
 
   // CART DOESN'T NEED TO BE UPDATE OR DELETED. IT'S ONLY USED TO ADD ITEMS TO THE CART

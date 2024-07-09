@@ -11,17 +11,6 @@ export class CreateCartItemDto {
     @ValidateIf((o) => o.productType === ProductType.VARIABLE)
     skuId: string;
 
-    @ApiProperty({ type: String, description: 'Product slug' })
-    @IsString()
-    @IsNotEmpty()
-    @ValidateIf((o) => o.productType === ProductType.SIMPLE)
-    productSlug: string
-
-    @ApiProperty({ type: 'enum', enum: ProductType, description: "Product type" })
-    @IsEnum(ProductType)
-    @IsNotEmpty()
-    productType: ProductType;
-
     @ApiProperty({ type: Number, description: 'Quantity' })
     @Transform(({ value }) => {
         if (isNaN(parseInt(value))) throw new BadRequestException('Quantity must be a number')

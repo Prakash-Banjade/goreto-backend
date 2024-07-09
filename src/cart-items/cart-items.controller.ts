@@ -22,14 +22,7 @@ export class CartItemsController {
   @ApiConsumes('multipart/form-data')
   @FormDataRequest({ storage: FileSystemStoredFile })
   create(@Body() createCartItemDto: CreateCartItemDto, @CurrentUser() currentUser: AuthUser) {
-    switch (createCartItemDto.productType) {
-      case ProductType.SIMPLE: {
-        return this.cartItemsService.addSimpleProductToCart(createCartItemDto, currentUser);
-      }
-      case ProductType.VARIABLE: {
-        return this.cartItemsService.addProductSkuToCart(createCartItemDto, currentUser);
-      }
-    }
+    return this.cartItemsService.create(createCartItemDto, currentUser);
   }
 
   @Get()

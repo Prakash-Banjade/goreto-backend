@@ -47,7 +47,7 @@ export class OrdersService {
 
 
     // ensure cart
-    const cart = await this.cartsService.getMyCart(currentUser);
+    const cart = await this.cartsService.findMyCart(currentUser);
     if (!cart) throw new NotFoundException('Cart not found');
 
 
@@ -68,9 +68,8 @@ export class OrdersService {
       const cartItem = cart.cartItems.find(item => item.id === cartItemId); // searching for cart item in cart instead of the db
       if (!cartItem) throw new NotFoundException('Cart item not found');
 
-      const product = cartItem.simpleProduct ?? cartItem.sku;
-      const productName = product instanceof Product ? product.productName : product.product.productName;
-      if (product.stockQuantity < cartItem.quantity) throw new BadRequestException(`Insufficient stock: ${productName} \n In Stock: ${product.stockQuantity} \n Requested: ${cartItem.quantity}`);
+      const sku = cartItem.sku;
+      if (sku.stockQuantity < cartItem.quantity) throw new BadRequestException(`Insufficient stock: ${sku.product.productName} \n In Stock: ${sku.stockQuantity} \n Requested: ${cartItem.quantity}`);
       totalAmount += cartItem.price;
     }
 
@@ -85,9 +84,7 @@ export class OrdersService {
 
     // create order-items
     for (const cartItem of cart.cartItems) {
-      cartItem?.simpleProduct
-        ? await this.createSimpleProductOrderItem(savedOrder, cartItem)
-        : await this.createSkuProductOrderItem(savedOrder, cartItem);
+      await this.createSkuProductOrderItem(savedOrder, cartItem);
     }
 
     // TODO: REMOVE CART-ITEMS AFTER ORDER IS CREATED ??
@@ -98,23 +95,6 @@ export class OrdersService {
     // TODO: INCREASE PRODUCT SOLD COUNT AFTER SUCCESSFUL PAYMENT
 
     return paymentResult;
-  }
-
-  async createSimpleProductOrderItem(order: Order, cartItem: CartItem) {
-    const orderItem = this.orderItemsRepo.create({
-      order: order,
-      simpleProduct: cartItem.simpleProduct,
-      quantity: cartItem.quantity,
-    })
-
-    await this.orderItemsRepository.createOrderItem(orderItem); // transaction
-
-    // update product stock
-    const product = await this.productRepo.findOne({
-      where: { id: cartItem.simpleProduct.id },
-    });
-    product.stockQuantity -= cartItem.quantity;
-    await this.productRepository.saveProduct(product); // transaction
   }
 
   async createSkuProductOrderItem(order: Order, cartItem: CartItem) {
@@ -169,7 +149,6 @@ export class OrdersService {
           sku: {
             product: true
           },
-          simpleProduct: true
         }
       }
     })

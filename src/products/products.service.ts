@@ -13,6 +13,8 @@ import { FileSystemStoredFile } from 'nestjs-form-data';
 import { ProductImage } from './skus/entities/product-image.entity';
 import { DeleteManyWithSlugsDto } from 'src/core/dto/deleteManyDto';
 import { Category } from 'src/categories/entities/category.entity';
+import { Sku } from './skus/entities/sku.entity';
+import { ProductType } from 'src/core/types/global.types';
 
 @Injectable()
 export class ProductsService {
@@ -20,6 +22,7 @@ export class ProductsService {
     @InjectRepository(Product) private readonly productRepo: Repository<Product>,
     @InjectRepository(Category) private readonly categoriesRepo: Repository<Category>,
     @InjectRepository(ProductImage) private readonly productImageRepo: Repository<ProductImage>,
+    @InjectRepository(Sku) private readonly skuRepo: Repository<Sku>,
     private readonly categoryService: CategoriesService,
   ) { }
 
@@ -35,9 +38,6 @@ export class ProductsService {
       description: createProductDto.description,
       slug: createProductDto?.slug,
       productType: createProductDto.productType,
-      price: createProductDto?.price,
-      salePrice: createProductDto?.salePrice,
-      stockQuantity: createProductDto?.stockQuantity,
       category,
       featuredImage,
     });
@@ -45,6 +45,8 @@ export class ProductsService {
     const savedProduct = await this.productRepo.save(product);
 
     await this.uploadGallery(savedProduct, createProductDto?.gallery);
+
+    if (product.productType === ProductType.SIMPLE) await this.createSkuForSimpleProduct(savedProduct, createProductDto);
 
     return {
       message: 'Product created',
@@ -66,8 +68,20 @@ export class ProductsService {
     }
   }
 
+  async createSkuForSimpleProduct(product: Product, createProductDto: CreateProductDto) {
+    const newSku = this.skuRepo.create({
+      product,
+      code: product.code,
+      gallery: product.gallery,
+      price: createProductDto?.price,
+      salePrice: createProductDto?.salePrice,
+      stockQuantity: createProductDto?.stockQuantity,
+    });
+    await this.skuRepo.save(newSku);
+  }
+
   async findAll(queryDto: ProductQueryDto) {
-    const queryBuilder = this.productRepo.createQueryBuilder('product');
+    const queryBuilder = this.skuRepo.createQueryBuilder('sku');
     const deletedAt = queryDto.deleted === Deleted.ONLY ? Not(IsNull()) : queryDto.deleted === Deleted.NONE ? IsNull() : Or(IsNull(), Not(IsNull()));
 
     const category = await this.categoriesRepo
@@ -87,9 +101,9 @@ export class ProductsService {
     }
 
     queryBuilder
+      .leftJoinAndSelect("sku.product", "product")
       .leftJoinAndSelect("product.category", "category")
       .leftJoinAndSelect("product.gallery", "gallery")
-      .leftJoinAndSelect("product.skus", "sku")
       .leftJoinAndSelect("product.reviews", "reviews")
       .orderBy("product.createdAt", queryDto.order)
       .skip(queryDto.search ? undefined : queryDto.skip)
@@ -97,10 +111,10 @@ export class ProductsService {
       .withDeleted()
       .where({ deletedAt })
       .andWhere(new Brackets(qb => {
-        qb.where([
-          { productName: ILike(`%${queryDto.search ?? ''}%`) },
-        ]);
+        queryDto.search && qb.andWhere("LOWER(product.productName) LIKE LOWER(:productName)", { productName: `%${queryDto.search ?? ''}%` });
         category && qb.andWhere('category.id IN (:...categoryIds)', { categoryIds });
+        queryDto.priceFrom && qb.andWhere("price >= :priceFrom", { priceFrom: queryDto.priceFrom });
+        queryDto.priceTo && qb.andWhere("price <= :priceTo", { priceTo: queryDto.priceTo });
         queryDto.ratingFrom && qb.andWhere("product.rating >= :ratingFrom", { ratingFrom: queryDto.ratingFrom });
         queryDto.ratingTo && qb.andWhere("product.rating <= :ratingTo", { ratingTo: queryDto.ratingTo });
       }));
@@ -121,6 +135,12 @@ export class ProductsService {
             attribute: true
           },
           gallery: true,
+        }
+      },
+      select: {
+        category: {
+          categoryName: true,
+          slug: true,
         }
       }
     });
