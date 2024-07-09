@@ -1,7 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import getImageURL from "src/core/utils/getImageURL";
 import { LocationSetting } from "../entities/location-setting.entity";
 import { LocationSettingDto } from "../dto/location-settings.dto";
 import { Location } from "../entities/location.entity";
@@ -26,43 +25,19 @@ export class LocationSettingService {
     async create(locationSettingsDto: LocationSettingDto) {
         transformAndValidateSync(LocationSettingDto, locationSettingsDto); // validate dto as form data
 
-        const { locations, ...createLocationDto } = locationSettingsDto;
-        const locationSetting = this.locationSettingRepo.create(createLocationDto);
+        const locationSetting = this.locationSettingRepo.create({
+            preTitle: locationSettingsDto.preTitle,
+            title: locationSettingsDto.title,
+            subTitle: locationSettingsDto.subTitle,
+        });
         const savedLocationSetting = await this.locationSettingRepo.save(locationSetting);
-
-        for (const location of locations) {
-            const image = getImageURL(location.image);
-
-            const locationEntity = this.locationRepo.create({
-                ...location,
-                image,
-                locationSetting: savedLocationSetting,
-            });
-            await this.locationRepo.save(locationEntity);
-        }
 
         return savedLocationSetting;
     }
 
     async update(locationSettingsDto: LocationSettingDto, locationSetting: LocationSetting) {
-        const { locations, ...updateLocationDto } = locationSettingsDto;
-
-        Object.assign(locationSetting, {
-            ...updateLocationDto,
-        });
+        Object.assign(locationSetting, locationSettingsDto);
         const savedLocationSetting = await this.locationSettingRepo.save(locationSetting);
-
-        await this.locationRepo.delete({ locationSetting: { id: savedLocationSetting.id } }); // delete old locations
-
-        for (const location of locations) {
-            const image = getImageURL(location.image);
-            const locationEntity = this.locationRepo.create({
-                ...location,
-                image,
-                locationSetting: savedLocationSetting,
-            });
-            await this.locationRepo.save(locationEntity);
-        }
 
         return savedLocationSetting;
     }
