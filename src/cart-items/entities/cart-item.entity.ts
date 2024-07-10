@@ -17,9 +17,12 @@ export class CartItem extends BaseEntity {
     @Column({ type: 'real' })
     price: number;
 
+    @Column({ type: 'boolean', default: false })
+    selected: boolean;
+
     @BeforeInsert()
     @BeforeUpdate()
     calculatePrice() {
-        this.price = this.sku?.price * this.quantity ?? 0
+        this.price = this.sku?.salePrice * this.quantity ?? 0
     }
 }

@@ -43,12 +43,14 @@ export class OrdersService {
 
   async create(createOrderDto: CreateOrderDto, currentUser: AuthUser) {
     const user = await this.usersService.findOne(currentUser.userId);
-    const { shippingAddressId, cartItemIds } = createOrderDto;
+    const { shippingAddressId } = createOrderDto;
 
 
     // ensure cart
     const cart = await this.cartsService.findMyCart(currentUser);
     if (!cart) throw new NotFoundException('Cart not found');
+
+    const cartItems = cart.cartItems.filter(item => item.selected);
 
 
     // get shipping address
@@ -64,10 +66,7 @@ export class OrdersService {
 
     // validate cart-items & calculate total amount
     let totalAmount: number = 0;
-    for (const cartItemId of cartItemIds) {
-      const cartItem = cart.cartItems.find(item => item.id === cartItemId); // searching for cart item in cart instead of the db
-      if (!cartItem) throw new NotFoundException('Cart item not found');
-
+    for (const cartItem of cartItems) {
       const sku = cartItem.sku;
       if (sku.stockQuantity < cartItem.quantity) throw new BadRequestException(`Insufficient stock: ${sku.product.productName} \n In Stock: ${sku.stockQuantity} \n Requested: ${cartItem.quantity}`);
       totalAmount += cartItem.price;

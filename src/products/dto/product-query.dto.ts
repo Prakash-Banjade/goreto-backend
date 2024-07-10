@@ -43,7 +43,7 @@ export class ProductQueryDto extends QueryDto {
         return Number(value);
     })
     @IsOptional()
-    ratingTo?: number = 5;
+    ratingTo?: number;
 
     @ApiPropertyOptional({ type: String, description: 'Stock count' })
     @Transform(({ value }) => {

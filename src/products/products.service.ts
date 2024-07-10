@@ -48,6 +48,10 @@ export class ProductsService {
 
     if (product.productType === ProductType.SIMPLE) await this.createSkuForSimpleProduct(savedProduct, createProductDto);
 
+    // increase category totalProductsCount
+    category.totalProductsCount++;
+    await this.categoriesRepo.save(category);
+
     return {
       message: 'Product created',
       productSlug: savedProduct.slug
@@ -78,6 +82,18 @@ export class ProductsService {
       stockQuantity: createProductDto?.stockQuantity,
     });
     await this.skuRepo.save(newSku);
+  }
+
+  async updateSkuForSimpleProduct(product: Product, updateProductDto: UpdateProductDto) {
+    Object.assign(product.skus[0], {
+      product,
+      code: product.code,
+      gallery: product.gallery,
+      price: updateProductDto?.price,
+      salePrice: updateProductDto?.salePrice,
+      stockQuantity: updateProductDto?.stockQuantity,
+    });
+    await this.skuRepo.save(product.skus[0]);
   }
 
   async findAll(queryDto: ProductQueryDto) {
@@ -113,8 +129,8 @@ export class ProductsService {
       .andWhere(new Brackets(qb => {
         queryDto.search && qb.andWhere("LOWER(product.productName) LIKE LOWER(:productName)", { productName: `%${queryDto.search ?? ''}%` });
         category && qb.andWhere('category.id IN (:...categoryIds)', { categoryIds });
-        queryDto.priceFrom && qb.andWhere("price >= :priceFrom", { priceFrom: queryDto.priceFrom });
-        queryDto.priceTo && qb.andWhere("price <= :priceTo", { priceTo: queryDto.priceTo });
+        queryDto.priceFrom && qb.andWhere("salePrice >= :priceFrom", { priceFrom: queryDto.priceFrom });
+        queryDto.priceTo && qb.andWhere("salePrice <= :priceTo", { priceTo: queryDto.priceTo });
         queryDto.ratingFrom && qb.andWhere("product.rating >= :ratingFrom", { ratingFrom: queryDto.ratingFrom });
         queryDto.ratingTo && qb.andWhere("product.rating <= :ratingTo", { ratingTo: queryDto.ratingTo });
       }));
@@ -167,6 +183,8 @@ export class ProductsService {
     const savedProduct = await this.productRepo.save(existing);
 
     await this.uploadGallery(savedProduct, updateProductDto?.gallery);
+
+    await this.updateSkuForSimpleProduct(savedProduct, updateProductDto);
 
     return {
       message: 'Product updated',

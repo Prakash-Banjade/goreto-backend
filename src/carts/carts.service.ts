@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateCartDto } from './dto/create-cart.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cart } from './entities/cart.entity';
-import { Repository } from 'typeorm';
+import { Or, Repository } from 'typeorm';
 import { CartsRepository } from './repository/carts.repository';
 import { UsersService } from 'src/users/users.service';
 import { AuthUser } from 'src/core/types/global.types';
@@ -25,13 +25,18 @@ export class CartsService {
     return await this.cartRepository.createCart(cart);
   }
 
-  async findMyCart(currentUser: AuthUser) {
+  async findMyCart(currentUser: AuthUser, selected?: boolean) {
     const existing = await this.cartRepo.findOne({
-      where: { user: { id: currentUser.userId } },
+      where: {
+        user: { id: currentUser.userId },
+        cartItems: { selected: selected ? selected : undefined },
+      },
       relations: {
         cartItems: {
           sku: {
-            product: true
+            product: {
+              category: true
+            }
           },
         }
       },

@@ -22,6 +22,7 @@ export class CartItemsService {
   ) { }
 
   async create(createCartItemDto: CreateCartItemDto, currentUser: AuthUser) {
+    console.log(createCartItemDto)
     const user = await this.usersService.findOne(currentUser.userId)
     const productSku = await this.skusService.findOne(createCartItemDto.skuId);
 

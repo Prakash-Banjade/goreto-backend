@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
-import { Brackets, ILike, IsNull, Repository, SelectQueryBuilder } from 'typeorm';
+import { Brackets, ILike, IsNull, Not, Or, Repository, SelectQueryBuilder } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import getImageURL from 'src/core/utils/getImageURL';
 import { CategoryQueryDto } from './dto/category-query.dto';
@@ -78,12 +78,6 @@ export class CategoriesService {
       right,
     });
 
-    // increase totalProductCount of parentcategory
-    if (parentCategory) {
-      parentCategory.totalProductsCount += 1;
-      await this.categoriesRepo.save(parentCategory);
-    }
-
     return await this.categoriesRepo.save(newCategory);
   }
 
@@ -98,7 +92,7 @@ export class CategoriesService {
           qb.where([{ categoryName: ILike(`%${queryDto.search ?? ''}%`) }]);
         }),
       )
-      .andWhere({ parentCategory: IsNull() }).getMany();
+      .andWhere({ parentCategory: queryDto.onlyParents === 'true' ? IsNull() : Or(IsNull(), Not(IsNull())) }).getMany();
 
     for (const category of categories) {
       category.totalProductsCount = await this.getTotalProductsCount(category);

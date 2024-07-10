@@ -17,6 +17,6 @@ export class Cart extends BaseEntity {
 
     @AfterLoad()
     calculateTotalAmount() {
-        this.totalAmount = this.cartItems?.reduce((acc, item) => acc + item.price, 0) ?? 0
+        this.totalAmount = this.cartItems?.filter(item => item.selected)?.reduce((acc, item) => acc + item.price, 0) ?? 0
     }
 }

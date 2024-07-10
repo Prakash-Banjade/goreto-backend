@@ -26,8 +26,8 @@ export class CartsController {
 
   @Get()
   @ApiPaginatedResponse(CreateCartDto)
-  async findMyCart(@CurrentUser() currentUser: AuthUser) {
-    return await this.cartsService.findMyCart(currentUser);
+  async findMyCart(@Query('selected') selected: string, @CurrentUser() currentUser: AuthUser) {
+    return await this.cartsService.findMyCart(currentUser, selected === 'true');
   }
 
   // CART DOESN'T NEED TO BE UPDATE OR DELETED. IT'S ONLY USED TO ADD ITEMS TO THE CART
