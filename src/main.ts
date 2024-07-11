@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3000;
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    origin: ['http://client.com'],
+    origin: ['http://localhost:3000', 'http://localhost:3001', 'https://goreto-frontend-v2.vercel.app', 'https://goreto-frontend-v2.vercel.app'],
     credentials: true,
     optionsSuccessStatus: 200,
     preflightContinue: false, // enforce CORS policy consistently across the application's endpoints.
