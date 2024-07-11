@@ -45,6 +45,7 @@ export class UsersService {
           cartItems: true,
         },
         account: true,
+        shippingAddresses: true,
       },
       select: {
         account: {
