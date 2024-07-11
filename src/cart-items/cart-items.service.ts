@@ -22,7 +22,6 @@ export class CartItemsService {
   ) { }
 
   async create(createCartItemDto: CreateCartItemDto, currentUser: AuthUser) {
-    console.log(createCartItemDto)
     const user = await this.usersService.findOne(currentUser.userId)
     const productSku = await this.skusService.findOne(createCartItemDto.skuId);
 
@@ -40,7 +39,8 @@ export class CartItemsService {
     const cartItem = this.cartItemsRepo.create({
       cart: user.cart,
       sku: productSku,
-      quantity: createCartItemDto.quantity
+      quantity: createCartItemDto.quantity,
+      selected: true
     });
 
     return await this.cartItemsRepo.save(cartItem);
