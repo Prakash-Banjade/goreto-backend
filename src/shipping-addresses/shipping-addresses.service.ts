@@ -32,6 +32,7 @@ export class ShippingAddressesService {
     const shippingAddress = this.shippingAddressRepo.create({
       user,
       address,
+      default: user.shippingAddresses.length === 0
     });
 
     await this.shippingAddressRepo.save(shippingAddress);
