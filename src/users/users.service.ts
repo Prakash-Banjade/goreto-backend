@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { IsNull, Not, Or, Repository } from 'typeorm';
+import { Brackets, IsNull, Not, Or, Repository } from 'typeorm';
 import paginatedData from 'src/core/utils/paginatedData';
 import { UserQueryDto } from './dto/user-query.dto';
 import { Deleted } from 'src/core/dto/query.dto';
@@ -26,9 +26,17 @@ export class UsersService {
       .take(queryDto.take)
       .withDeleted()
       .where({ deletedAt })
-      .leftJoinAndSelect("user.account", "account")
-      .leftJoinAndSelect("user.address", "address")
-      .leftJoinAndSelect("user.shippingAddresses", "shippingAddresses")
+      .leftJoin("user.account", "account")
+      .leftJoin("user.address", "address")
+      .leftJoin("user.shippingAddresses", "shippingAddresses")
+      .andWhere(new Brackets(qb => {
+        queryDto.role && qb.andWhere('account.role = :role', { role: queryDto.role });
+      }))
+      .select([
+        'account.firstName', 'account.lastName', 'account.email', 'account.role', 'account.isVerified',
+        'user.id', 'user.phone', 'user.gender', 'user.dob', 'user.image', 'user.createdAt',
+        'address.address1', 'address.address2',
+      ])
 
     return paginatedData(queryDto, queryBuilder);
   }
