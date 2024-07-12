@@ -44,7 +44,6 @@ export class OrdersService {
     const user = await this.usersService.findOne(currentUser.userId);
     const { shippingAddressId } = createOrderDto;
 
-
     // ensure cart
     const cart = await this.cartsService.findMyCart(currentUser, true);
     if (!cart) throw new NotFoundException('Cart not found');
@@ -82,7 +81,8 @@ export class OrdersService {
       await this.createSkuProductOrderItem(savedOrder, cartItem);
     }
 
-    // TODO: REMOVE CART-ITEMS AFTER ORDER IS CREATED ??
+    // REMOVE CART-ITEMS AFTER ORDER IS CREATED
+    await this.ordersRepository.removeCartItems(cart.cartItems);
 
     // PROCESS PAYMENT
     const paymentResult = await this.paymentService.create(savedOrder, createOrderDto.paymentMethod);
