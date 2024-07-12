@@ -86,6 +86,7 @@ export class CategoriesService {
 
     const categories = await qb
       .leftJoinAndSelect('category.parentCategory', 'parentCategory')
+      .leftJoinAndSelect('category.children', 'childrenCategory')
       .orderBy('category.createdAt', queryDto.order)
       .andWhere(
         new Brackets(qb => {

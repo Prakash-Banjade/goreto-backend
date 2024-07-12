@@ -29,6 +29,9 @@ export class Category extends BaseEntity {
     @ManyToOne(() => Category, (category) => category.parentCategory, { nullable: true })
     parentCategory: Category
 
+    @OneToMany(() => Category, (category) => category.parentCategory)
+    children: Category[]
+
     @Column({ type: 'int', default: 0 })
     totalProductsCount: number;
 
