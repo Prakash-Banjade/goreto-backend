@@ -131,7 +131,7 @@ export class ProductsService {
         category && qb.andWhere('category.id IN (:...categoryIds)', { categoryIds });
         queryDto.priceFrom && qb.andWhere("salePrice >= :priceFrom", { priceFrom: queryDto.priceFrom });
         queryDto.priceTo && qb.andWhere("salePrice <= :priceTo", { priceTo: queryDto.priceTo });
-        queryDto.ratingFrom && qb.andWhere("product.rating >= :ratingFrom", { ratingFrom: queryDto.ratingFrom });
+        queryDto.ratingFrom && queryDto.ratingFrom > 1 && qb.andWhere("product.rating >= :ratingFrom", { ratingFrom: queryDto.ratingFrom });
         queryDto.ratingTo && qb.andWhere("product.rating <= :ratingTo", { ratingTo: queryDto.ratingTo });
       }));
 
