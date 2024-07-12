@@ -278,6 +278,10 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(changePasswordDto.oldPassword, foundAccount.password);
     if (!isPasswordValid) throw new BadRequestException('Invalid password');
 
+    // CHECKING IF THE NEW PASSWORD IS THE SAME AS THE OLD ONE
+    const samePassword = await bcrypt.compare(changePasswordDto.newPassword, foundAccount.password);
+    if (samePassword) throw new BadRequestException('New password cannot be the same as the old one');
+
     foundAccount.password = await bcrypt.hash(changePasswordDto.newPassword, 10);
     await this.accountRepository.insert(foundAccount);
 
