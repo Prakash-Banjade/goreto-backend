@@ -12,9 +12,6 @@ export class OrderItem extends BaseEntity {
     @ManyToOne(() => Sku, sku => sku.orderItems, { onDelete: 'RESTRICT' })
     sku: Sku
 
-    @ManyToOne(() => Product, (simpleProduct) => simpleProduct.orderItems, { onDelete: 'RESTRICT' })
-    simpleProduct: Product;
-
     @Column({ type: 'int' })
     quantity: number
 
@@ -24,10 +21,6 @@ export class OrderItem extends BaseEntity {
     @BeforeInsert()
     @BeforeUpdate()
     calculatePrice() {
-        if (this.simpleProduct?.salePrice) {
-            this.price = this.simpleProduct.salePrice
-        } else if (this.sku?.salePrice) {
-            this.price = this.sku?.salePrice
-        }
+        this.price = this.sku?.salePrice * this.quantity ?? 0
     }
 }

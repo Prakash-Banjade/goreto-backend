@@ -29,10 +29,6 @@ export class CreateOrderDto {
     // @Type(() => CreateOrderItemDto)
     // items: CreateOrderItemDto[];
 
-    @ApiProperty({ type: [String], format: 'uuid', isArray: true, description: 'Cart items Ids' })
-    @IsUUID('all', { each: true })
-    cartItemIds: string[]
-
     @ApiProperty({ type: 'enum', enum: PaymentMethod, description: 'Payment method' })
     @IsEnum(PaymentMethod)
     paymentMethod: PaymentMethod;

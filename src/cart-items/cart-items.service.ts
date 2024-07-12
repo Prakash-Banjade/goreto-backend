@@ -18,34 +18,9 @@ export class CartItemsService {
     @InjectRepository(CartItem) private readonly cartItemsRepo: Repository<CartItem>,
     private readonly usersService: UsersService,
     private readonly skusService: SkusService,
-    private readonly productService: ProductsService,
   ) { }
 
-  async addSimpleProductToCart(createCartItemDto: CreateCartItemDto, currentUser: AuthUser) {
-    const user = await this.usersService.findOne(currentUser.userId);
-    const product = await this.productService.findOne(createCartItemDto.productSlug);
-
-    // ADD QUANTITY ON EXISTING
-    const existingCartItem = await this.cartItemsRepo.findOne({
-      where: { cart: { user: { id: currentUser.userId } }, simpleProduct: { id: product.id } }
-    });
-    if (existingCartItem) {
-      existingCartItem.quantity += createCartItemDto.quantity;
-      existingCartItem.simpleProduct = product; // this is just to calculate price in cart-item.entity
-      return await this.cartItemsRepo.save(existingCartItem);
-    }
-
-    // CREATE NEW
-    const cartItem = this.cartItemsRepo.create({
-      cart: user.cart,
-      simpleProduct: product,
-      quantity: createCartItemDto.quantity
-    });
-
-    return await this.cartItemsRepo.save(cartItem);
-  }
-
-  async addProductSkuToCart(createCartItemDto: CreateCartItemDto, currentUser: AuthUser) {
+  async create(createCartItemDto: CreateCartItemDto, currentUser: AuthUser) {
     const user = await this.usersService.findOne(currentUser.userId)
     const productSku = await this.skusService.findOne(createCartItemDto.skuId);
 
@@ -63,7 +38,8 @@ export class CartItemsService {
     const cartItem = this.cartItemsRepo.create({
       cart: user.cart,
       sku: productSku,
-      quantity: createCartItemDto.quantity
+      quantity: createCartItemDto.quantity,
+      selected: true
     });
 
     return await this.cartItemsRepo.save(cartItem);
@@ -96,7 +72,7 @@ export class CartItemsService {
   async findOne(id: string, currentUser: AuthUser) {
     const existing = await this.cartItemsRepo.findOne({
       where: { id, cart: { user: { id: currentUser.userId } } },
-      relations: { sku: true, simpleProduct: true },
+      relations: { sku: true },
     })
     if (!existing) throw new BadRequestException('Cart item not found');
 

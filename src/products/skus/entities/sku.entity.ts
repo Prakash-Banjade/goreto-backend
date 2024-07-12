@@ -26,7 +26,7 @@ export class Sku extends BaseEntity {
     calculageDiscountPercentage() {
         if (this.salePrice) {
             if (this.salePrice > this.price) throw new BadRequestException('Sale price cannot be greater than price')
-            this.discountPercentage = (this.price - this.salePrice) / this.price * 100
+            this.discountPercentage = Math.floor((this.price - this.salePrice) / this.price * 100)
         } else {
             this.salePrice = this.price
         }

@@ -5,12 +5,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { CaslModule } from 'src/casl/casl.module';
 import { UsersRepository } from './repository/user.repository';
+import { Account } from 'src/accounts/entities/account.entity';
 
 @Global()
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      User
+      User,
+      Account
     ]),
     CaslModule,
   ],

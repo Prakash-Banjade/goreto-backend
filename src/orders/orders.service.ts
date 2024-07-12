@@ -3,7 +3,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Order } from './entities/order.entity';
-import { Brackets, IsNull, Not, Or, Repository } from 'typeorm';
+import { Brackets, Equal, IsNull, Not, Or, Repository } from 'typeorm';
 import { OrderQueryDto } from './dto/order-query.dto';
 import { AuthUser, OrderStatus, Roles } from 'src/core/types/global.types';
 import { UsersService } from 'src/users/users.service';
@@ -20,20 +20,19 @@ import { PaymentsService } from 'src/payments/payments.service';
 import { Sku } from 'src/products/skus/entities/sku.entity';
 import { SkuRepository } from 'src/products/skus/repository/sku.repository';
 import { CartItem } from 'src/cart-items/entities/cart-item.entity';
-import { ProductsRepository } from 'src/products/repository/product.repository';
 import { Product } from 'src/products/entities/product.entity';
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectRepository(Order) private readonly ordersRepo: Repository<Order>,
+    @InjectRepository(CanceledOrder) private readonly canceledOrderRepo: Repository<CanceledOrder>,
     private readonly ordersRepository: OrdersRepository,
     @InjectRepository(OrderItem) private readonly orderItemsRepo: Repository<OrderItem>,
     @InjectRepository(Product) private readonly productRepo: Repository<Product>,
     private readonly orderItemsRepository: OrderItemsRepository,
     @InjectRepository(Sku) private readonly skuRepo: Repository<Sku>,
     private readonly skuRepository: SkuRepository,
-    private readonly productRepository: ProductsRepository,
     private readonly paymentService: PaymentsService,
     @InjectRepository(CanceledOrder) private readonly canceledOrdersRepo: Repository<CanceledOrder>,
     private readonly usersService: UsersService,
@@ -43,13 +42,11 @@ export class OrdersService {
 
   async create(createOrderDto: CreateOrderDto, currentUser: AuthUser) {
     const user = await this.usersService.findOne(currentUser.userId);
-    const { shippingAddressId, cartItemIds } = createOrderDto;
-
+    const { shippingAddressId } = createOrderDto;
 
     // ensure cart
-    const cart = await this.cartsService.getMyCart(currentUser);
+    const cart = await this.cartsService.findMyCart(currentUser, true);
     if (!cart) throw new NotFoundException('Cart not found');
-
 
     // get shipping address
     const defaultShippingAddress = await this.shippingAddressesService.getDefaultShippingAddress(currentUser);
@@ -64,13 +61,9 @@ export class OrdersService {
 
     // validate cart-items & calculate total amount
     let totalAmount: number = 0;
-    for (const cartItemId of cartItemIds) {
-      const cartItem = cart.cartItems.find(item => item.id === cartItemId); // searching for cart item in cart instead of the db
-      if (!cartItem) throw new NotFoundException('Cart item not found');
-
-      const product = cartItem.simpleProduct ?? cartItem.sku;
-      const productName = product instanceof Product ? product.productName : product.product.productName;
-      if (product.stockQuantity < cartItem.quantity) throw new BadRequestException(`Insufficient stock: ${productName} \n In Stock: ${product.stockQuantity} \n Requested: ${cartItem.quantity}`);
+    for (const cartItem of cart.cartItems) {
+      const sku = cartItem.sku;
+      if (sku.stockQuantity < cartItem.quantity) throw new BadRequestException(`Insufficient stock: ${sku.product.productName} \n In Stock: ${sku.stockQuantity} \n Requested: ${cartItem.quantity}`);
       totalAmount += cartItem.price;
     }
 
@@ -85,12 +78,11 @@ export class OrdersService {
 
     // create order-items
     for (const cartItem of cart.cartItems) {
-      cartItem?.simpleProduct
-        ? await this.createSimpleProductOrderItem(savedOrder, cartItem)
-        : await this.createSkuProductOrderItem(savedOrder, cartItem);
+      await this.createSkuProductOrderItem(savedOrder, cartItem);
     }
 
-    // TODO: REMOVE CART-ITEMS AFTER ORDER IS CREATED ??
+    // REMOVE CART-ITEMS AFTER ORDER IS CREATED
+    await this.ordersRepository.removeCartItems(cart.cartItems);
 
     // PROCESS PAYMENT
     const paymentResult = await this.paymentService.create(savedOrder, createOrderDto.paymentMethod);
@@ -98,23 +90,6 @@ export class OrdersService {
     // TODO: INCREASE PRODUCT SOLD COUNT AFTER SUCCESSFUL PAYMENT
 
     return paymentResult;
-  }
-
-  async createSimpleProductOrderItem(order: Order, cartItem: CartItem) {
-    const orderItem = this.orderItemsRepo.create({
-      order: order,
-      simpleProduct: cartItem.simpleProduct,
-      quantity: cartItem.quantity,
-    })
-
-    await this.orderItemsRepository.createOrderItem(orderItem); // transaction
-
-    // update product stock
-    const product = await this.productRepo.findOne({
-      where: { id: cartItem.simpleProduct.id },
-    });
-    product.stockQuantity -= cartItem.quantity;
-    await this.productRepository.saveProduct(product); // transaction
   }
 
   async createSkuProductOrderItem(order: Order, cartItem: CartItem) {
@@ -136,25 +111,112 @@ export class OrdersService {
 
   async findAll(queryDto: OrderQueryDto, currentUser: AuthUser) {
     const queryBuilder = this.ordersRepo.createQueryBuilder('order');
-    const deletedAt = queryDto.deleted === Deleted.ONLY ? Not(IsNull()) : queryDto.deleted === Deleted.NONE ? IsNull() : Or(IsNull(), Not(IsNull()));
+
+    const deletedAtCondition = queryDto.deleted === Deleted.ONLY
+      ? 'order.deletedAt IS NOT NULL'
+      : queryDto.deleted === Deleted.NONE
+        ? 'order.deletedAt IS NULL'
+        : '1=1'; // Default condition to match all
 
     queryBuilder
       .orderBy("order.createdAt", queryDto.order)
       .skip(queryDto.search ? undefined : queryDto.skip)
       .take(queryDto.search ? undefined : queryDto.take)
       .withDeleted()
-      .where({ deletedAt })
-      .leftJoinAndSelect("order.orderItems", "orderItems")
-      .leftJoinAndSelect("orderItems.sku", "sku")
-      .leftJoinAndSelect("orderItems.simpleProduct", "simpleProduct")
-      // .leftJoinAndSelect("sku", "sku.product AS productSku")
-      .leftJoinAndSelect("order.payment", "payment")
+      .where(deletedAtCondition)
+      .leftJoin("order.user", "user")
+      .leftJoin("user.account", "account")
+      .leftJoin("order.shippingAddress", "shippingAddress")
+      .leftJoin("shippingAddress.address", "address")
+      .leftJoin("order.orderItems", "orderItems")
+      .leftJoin("orderItems.sku", "sku")
+      .leftJoin("sku.product", "product")
+      .leftJoin("order.payment", "payment")
       .andWhere(new Brackets(qb => {
-        qb.where([
-          // { productName: ILike(`%${queryDto.search ?? ''}%`) },
-        ]);
-        currentUser.role === Roles.USER && qb.andWhere({ user: { id: currentUser.userId } });
+        if (currentUser.role === Roles.USER) {
+          qb.andWhere("order.userId = :userId", { userId: currentUser.userId });
+          queryDto.trackingNumber && qb.andWhere({ trackingNumber: Equal(queryDto.trackingNumber) });
+        }
       }))
+      .select([
+        'order',
+        'user',
+        'account.firstName',
+        'account.lastName',
+        'account.email',
+        'shippingAddress.addressName',
+        'address.address1',
+        'orderItems.quantity',
+        'orderItems.price',
+        'sku.code',
+        'sku.price',
+        'sku.salePrice',
+        'sku.discountPercentage',
+        'sku.stockQuantity',
+        'sku.product',
+        'product.productName',
+        'product.slug',
+        'product.featuredImage',
+        'payment.paymentMethod',
+        'payment.status',
+      ])
+
+    return paginatedData(queryDto, queryBuilder);
+  }
+
+  async findCancelledOrders(queryDto: OrderQueryDto, currentUser: AuthUser) {
+    const queryBuilder = this.canceledOrderRepo.createQueryBuilder('canceledOrder');
+
+    const deletedAtCondition = queryDto.deleted === Deleted.ONLY
+      ? 'canceledOrder.deletedAt IS NOT NULL'
+      : queryDto.deleted === Deleted.NONE
+        ? 'canceledOrder.deletedAt IS NULL'
+        : '1=1'; // Default condition to match all
+
+    queryBuilder
+      .orderBy("canceledOrder.createdAt", queryDto.order)
+      .skip(queryDto.search ? undefined : queryDto.skip)
+      .take(queryDto.search ? undefined : queryDto.take)
+      .withDeleted()
+      .where(deletedAtCondition)
+      .leftJoin("canceledOrder.order", "order")
+      .leftJoin("order.user", "user")
+      .leftJoin("user.account", "account")
+      .leftJoin("order.shippingAddress", "shippingAddress")
+      .leftJoin("shippingAddress.address", "address")
+      .leftJoin("order.orderItems", "orderItems")
+      .leftJoin("orderItems.sku", "sku")
+      .leftJoin("sku.product", "product")
+      .leftJoin("order.payment", "payment")
+      .andWhere(new Brackets(qb => {
+        if (currentUser.role === Roles.USER) {
+          qb.andWhere("order.userId = :userId", { userId: currentUser.userId });
+          queryDto.trackingNumber && qb.andWhere({ trackingNumber: Equal(queryDto.trackingNumber) });
+        }
+      }))
+      .select([
+        'canceledOrder',
+        'order',
+        'user',
+        'account.firstName',
+        'account.lastName',
+        'account.email',
+        'shippingAddress.addressName',
+        'address.address1',
+        'orderItems.quantity',
+        'orderItems.price',
+        'sku.code',
+        'sku.price',
+        'sku.salePrice',
+        'sku.discountPercentage',
+        'sku.stockQuantity',
+        'sku.product',
+        'product.productName',
+        'product.slug',
+        'product.featuredImage',
+        'payment.paymentMethod',
+        'payment.status',
+      ])
 
     return paginatedData(queryDto, queryBuilder);
   }
@@ -169,7 +231,6 @@ export class OrdersService {
           sku: {
             product: true
           },
-          simpleProduct: true
         }
       }
     })
@@ -227,5 +288,4 @@ export class OrdersService {
       message: "Order cancelled",
     }
   }
-
 }

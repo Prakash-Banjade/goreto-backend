@@ -31,7 +31,9 @@ export class ShippingAddressesService {
     // create new shipping address
     const shippingAddress = this.shippingAddressRepo.create({
       user,
+      addressName: createShippingAddressDto.addressName,
       address,
+      default: user.shippingAddresses.length === 0 || createShippingAddressDto.default
     });
 
     await this.shippingAddressRepo.save(shippingAddress);
@@ -73,15 +75,15 @@ export class ShippingAddressesService {
     const existingShippingAddress = await this.findOne(id, currentUser);
 
     // update address
-    const address = await this.addressService.update(existingShippingAddress.address?.id, updateShippingAddressDto);
-
-    existingShippingAddress.address = address;
+    await this.addressService.update(existingShippingAddress.address?.id, updateShippingAddressDto);
 
     // update default shipping address if this is choosen as default
     if (updateShippingAddressDto?.default) {
       await this.shippingAddressRepo.update({ user: existingShippingAddress.user, default: true }, { default: false });
       existingShippingAddress.default = true;
     }
+
+    (updateShippingAddressDto.addressName?.length > 0) && (existingShippingAddress.addressName = updateShippingAddressDto.addressName)
 
     return await this.shippingAddressRepo.save(existingShippingAddress);
   }

@@ -5,6 +5,7 @@ import { BaseRepository } from 'src/core/repository/base.repository';
 import { DataSource } from 'typeorm';
 import { Order } from '../entities/order.entity';
 import { CanceledOrder } from '../entities/canceled-order.entity';
+import { CartItem } from 'src/cart-items/entities/cart-item.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class OrdersRepository extends BaseRepository {
@@ -18,5 +19,9 @@ export class OrdersRepository extends BaseRepository {
 
     async cancelOrder(canceledOrder: CanceledOrder) {
         return await this.getRepository<CanceledOrder>(CanceledOrder).save(canceledOrder);
+    }
+
+    async removeCartItems(cartItems: CartItem[]) {
+        return await this.getRepository<CartItem>(CartItem).remove(cartItems);
     }
 }

@@ -1,19 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { IsNull, Not, Or, Repository } from 'typeorm';
+import { Brackets, IsNull, Not, Or, Repository } from 'typeorm';
 import paginatedData from 'src/core/utils/paginatedData';
 import { UserQueryDto } from './dto/user-query.dto';
 import { Deleted } from 'src/core/dto/query.dto';
 import getImageURL from 'src/core/utils/getImageURL';
 import { AuthUser } from 'src/core/types/global.types';
+import { Account } from 'src/accounts/entities/account.entity';
 
 @Injectable()
 export class UsersService {
 
   constructor(
-    @InjectRepository(User) private usersRepository: Repository<User>
+    @InjectRepository(User) private usersRepository: Repository<User>,
+    @InjectRepository(Account) private accountRepo: Repository<Account>,
   ) { }
 
   async findAll(queryDto: UserQueryDto) {
@@ -26,9 +28,17 @@ export class UsersService {
       .take(queryDto.take)
       .withDeleted()
       .where({ deletedAt })
-      .leftJoinAndSelect("user.account", "account")
-      .leftJoinAndSelect("user.address", "address")
-      .leftJoinAndSelect("user.shippingAddresses", "shippingAddresses")
+      .leftJoin("user.account", "account")
+      .leftJoin("user.address", "address")
+      .leftJoin("user.shippingAddresses", "shippingAddresses")
+      .andWhere(new Brackets(qb => {
+        queryDto.role && qb.andWhere('account.role = :role', { role: queryDto.role });
+      }))
+      .select([
+        'account.firstName', 'account.lastName', 'account.email', 'account.role', 'account.isVerified',
+        'user.id', 'user.phone', 'user.gender', 'user.dob', 'user.image', 'user.createdAt',
+        'address.address1', 'address.address2',
+      ])
 
     return paginatedData(queryDto, queryBuilder);
   }
@@ -45,6 +55,7 @@ export class UsersService {
           cartItems: true,
         },
         account: true,
+        shippingAddresses: true,
       },
       select: {
         account: {
@@ -52,7 +63,6 @@ export class UsersService {
           email: true,
           firstName: true,
           lastName: true,
-          image: true,
           role: true,
           isVerified: true,
         }
@@ -63,8 +73,10 @@ export class UsersService {
     return existingUser;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
-    const existingUser = await this.findOne(id);
+  async update(updateUserDto: UpdateUserDto, currentUser: AuthUser) {
+    const existingUser = await this.findOne(currentUser.userId);
+    const existingAccount = await this.accountRepo.findOneBy({ id: currentUser.accountId });
+    if (!existingAccount) throw new InternalServerErrorException('Unable to update the associated profile. Please contact support.');
 
     // evaluate profile image
     const image = updateUserDto.image ? getImageURL(updateUserDto.image) : existingUser.image;
@@ -75,7 +87,25 @@ export class UsersService {
       image,
     });
 
-    return await this.usersRepository.save(existingUser);
+    await this.usersRepository.save(existingUser);
+
+    // update account
+    if (updateUserDto.email) {
+      const existingAccountWithSameEmail = await this.accountRepo.findOneBy({ email: updateUserDto.email });
+      if (existingAccountWithSameEmail && existingAccountWithSameEmail.id !== currentUser.accountId) throw new BadRequestException('Email already in use');
+    }
+
+    Object.assign(existingAccount, {
+      firstName: updateUserDto.firstName || existingAccount.firstName,
+      lastName: updateUserDto.lastName,
+      email: updateUserDto.email || existingAccount.email,
+    })
+
+    await this.accountRepo.save(existingAccount);
+
+    return {
+      message: 'Profile Updated'
+    }
   }
 
   async remove(id: string) {

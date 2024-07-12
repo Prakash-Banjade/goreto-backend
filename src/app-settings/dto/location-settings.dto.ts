@@ -32,13 +32,7 @@ export class CreateLocationSettingDto {
     @IsString()
     @IsNotEmpty()
     subTitle: string
-
-    @ApiProperty({ type: [CreateLocationDto] })
-    @IsArray()
-    @ArrayMinSize(1)
-    @Type(() => CreateLocationDto)
-    @ValidateNested({ each: true })
-    locations: CreateLocationDto[]
 }
 
 export class LocationSettingDto extends PartialType(CreateLocationSettingDto) { }
+export class LocationSettingUpdateDto extends PartialType(CreateLocationSettingDto) { }

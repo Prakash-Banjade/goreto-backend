@@ -1,13 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateCartDto } from './dto/create-cart.dto';
-import { UpdateCartDto } from './dto/update-cart.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cart } from './entities/cart.entity';
-import { Brackets, IsNull, Not, Or, Repository } from 'typeorm';
+import { Or, Repository } from 'typeorm';
 import { CartsRepository } from './repository/carts.repository';
 import { UsersService } from 'src/users/users.service';
-import { Deleted, QueryDto } from 'src/core/dto/query.dto';
-import paginatedData from 'src/core/utils/paginatedData';
 import { AuthUser } from 'src/core/types/global.types';
 
 @Injectable()
@@ -28,58 +25,25 @@ export class CartsService {
     return await this.cartRepository.createCart(cart);
   }
 
-  async findAll(queryDto: QueryDto) {
-    const queryBuilder = this.cartRepo.createQueryBuilder('cart');
-    const deletedAt = queryDto.deleted === Deleted.ONLY ? Not(IsNull()) : queryDto.deleted === Deleted.NONE ? IsNull() : Or(IsNull(), Not(IsNull()));
-
-    queryBuilder
-      .orderBy("cart.createdAt", queryDto.order)
-      .skip(queryDto.search ? undefined : queryDto.skip)
-      .take(queryDto.search ? undefined : queryDto.take)
-      .withDeleted()
-      .where({ deletedAt })
-      .andWhere(new Brackets(qb => {
-        // qb.where([
-        //   { cartName: ILike(`%${queryDto.search ?? ''}%`) },
-        // ]);
-        // queryDto.gender && qb.andWhere({ gender: queryDto.gender });
-      }))
-
-    return paginatedData(queryDto, queryBuilder);
-  }
-
-  async findOne(id: string) {
+  async findMyCart(currentUser: AuthUser, selected?: boolean) {
     const existing = await this.cartRepo.findOne({
-      where: { id }
-    })
-    if (!existing) throw new BadRequestException('Cart not found');
-
-    return existing
-  }
-
-  async getMyCart(currentUser: AuthUser) {
-    const existing = await this.cartRepo.findOne({
-      where: { user: { id: currentUser.userId } },
+      where: {
+        user: { id: currentUser.userId },
+        cartItems: { selected: selected ? selected : undefined },
+      },
       relations: {
-        cartItems: { sku: { product: true }, simpleProduct: true }
-      }
+        cartItems: {
+          sku: {
+            product: {
+              category: true
+            }
+          },
+        }
+      },
     })
     if (!existing) throw new BadRequestException('Cart not found');
 
+
     return existing
   }
-
-  // async update(id: string, updateCartDto: UpdateCartDto) {
-  //   return updateCartDto
-  // }
-
-  // async remove(id: string) {
-  //   const existing = await this.findOne(id);
-
-  //   await this.cartRepo.softRemove(existing);
-
-  //   return {
-  //     message: 'Cart removed',
-  //   }
-  // }
 }

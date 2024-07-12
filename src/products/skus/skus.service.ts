@@ -80,7 +80,7 @@ export class SkusService {
     const attributeValue = attributeOptions.map((attributeOption) => attributeOption.value).join('-').replaceAll(/\s+/g, '');
     const attributeCode = attributeOptions.map((attributeOption) => attributeOption.attribute.code).join('-').replaceAll(/\s+/g, '');
 
-    return `${brandCode}-${productCode}-${attributeCode}-${attributeValue}`
+    return (`${brandCode}-${productCode}-${attributeCode}-${attributeValue}`).replaceAll(/\s+/g, '');
 
   }
 

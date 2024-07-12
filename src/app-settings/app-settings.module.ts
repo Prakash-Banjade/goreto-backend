@@ -16,6 +16,8 @@ import { LocationSetting } from './entities/location-setting.entity';
 import { Location } from './entities/location.entity';
 import { LocationSettingController } from './location-settings/location-settings.controller';
 import { LocationSettingService } from './location-settings/location-settings.service';
+import { LocationController } from './location-settings/location.controller';
+import { LocationService } from './location-settings/location.service';
 
 @Module({
   imports: [
@@ -34,6 +36,7 @@ import { LocationSettingService } from './location-settings/location-settings.se
     SeoSettingController,
     FaqController,
     LocationSettingController,
+    LocationController,
   ],
   providers: [
     GeneralSettingService,
@@ -41,6 +44,7 @@ import { LocationSettingService } from './location-settings/location-settings.se
     SeoSettingService,
     FaqService,
     LocationSettingService,
+    LocationService,
   ],
 })
 export class AppSettingsModule { }

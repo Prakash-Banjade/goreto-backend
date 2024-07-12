@@ -41,12 +41,12 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
-  @Patch(':id')
+  @Patch()
   @ApiConsumes('multipart/form-data')
   @FormDataRequest({ storage: FileSystemStoredFile })
-  @ChekcAbilities({ action: Action.UPDATE, subject: 'all' })
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
+  @ChekcAbilities({ action: Action.UPDATE, subject: User })
+  update(@Body() updateUserDto: UpdateUserDto, @CurrentUser() currentUser: AuthUser) {
+    return this.usersService.update(updateUserDto, currentUser);
   }
 
   @Delete(':id')

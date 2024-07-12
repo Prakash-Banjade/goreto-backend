@@ -30,7 +30,9 @@ export class OrdersController {
   @Get()
   @ApiPaginatedResponse(CreateOrderDto)
   findAll(@Query() queryDto: OrderQueryDto, @CurrentUser() currentUser: AuthUser) {
-    return this.ordersService.findAll(queryDto, currentUser);
+    return queryDto.cancelled === 'true'
+      ? this.ordersService.findCancelledOrders(queryDto, currentUser)
+      : this.ordersService.findAll(queryDto, currentUser)
   }
 
   @Get(':id')

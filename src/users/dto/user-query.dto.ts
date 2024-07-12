@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsOptional, IsString } from "class-validator";
 import { QueryDto } from "src/core/dto/query.dto";
 import { Country } from "src/core/types/country.type";
-import { Gender } from "src/core/types/global.types";
+import { Gender, Roles } from "src/core/types/global.types";
 
 export class UserQueryDto extends QueryDto {
 
@@ -18,6 +18,9 @@ export class UserQueryDto extends QueryDto {
     @IsOptional()
     dob?: string;
 
+    @ApiPropertyOptional({ type: 'enum', enum: Roles })
+    @IsOptional()
+    role: Roles
     
     @ApiPropertyOptional({ type: String, description: 'Address 1' })
     @IsString()
