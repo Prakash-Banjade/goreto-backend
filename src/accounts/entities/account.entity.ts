@@ -10,7 +10,7 @@ export class Account extends BaseEntity {
     @Column({ type: 'varchar' })
     firstName!: string;
 
-    @Column({ type: 'varchar', nullable: true })
+    @Column({ type: 'varchar', default: '' })
     lastName?: string;
 
     @Column({ type: 'varchar' })
@@ -21,9 +21,6 @@ export class Account extends BaseEntity {
 
     @Column({ type: 'enum', enum: Roles, default: Roles.USER })
     role: Roles;
-
-    @Column({ type: 'varchar', nullable: true })
-    image: string;
 
     @Column({ type: 'simple-array', nullable: true })
     refresh_token: string[];
