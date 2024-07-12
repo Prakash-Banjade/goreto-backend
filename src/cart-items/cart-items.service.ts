@@ -18,7 +18,6 @@ export class CartItemsService {
     @InjectRepository(CartItem) private readonly cartItemsRepo: Repository<CartItem>,
     private readonly usersService: UsersService,
     private readonly skusService: SkusService,
-    private readonly productService: ProductsService,
   ) { }
 
   async create(createCartItemDto: CreateCartItemDto, currentUser: AuthUser) {
