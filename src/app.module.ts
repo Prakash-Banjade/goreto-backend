@@ -31,6 +31,7 @@ import { StripeModule } from './stripe/stripe.module';
 import { MailModule } from './mail/mail.module';
 import { ConfigModule } from '@nestjs/config';
 import { AppSettingsModule } from './app-settings/app-settings.module';
+import { ContactRequestsModule } from './contact-requests/contact-requests.module';
 
 @Module({
   imports: [
@@ -79,19 +80,20 @@ import { AppSettingsModule } from './app-settings/app-settings.module';
     OrdersModule,
     PaymentsModule,
     MailModule,
-    AppSettingsModule
+    AppSettingsModule,
+    ContactRequestsModule
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    {
-      provide: APP_GUARD,
-      useClass: AuthGuard, // global auth guard
-    },
-    {
-      provide: APP_GUARD,
-      useClass: AbilitiesGuard, // global ability guard
-    },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: AuthGuard, // global auth guard
+    // },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: AbilitiesGuard, // global ability guard
+    // },
     // {
     //   provide: APP_GUARD,
     //   useClass: ThrottlerGuard, // global rate limiting, but can be overriden in route level

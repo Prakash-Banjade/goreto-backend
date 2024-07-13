@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Post } from "@nestjs/common";
+import { Body, Controller, Get, ParseArrayPipe, Post } from "@nestjs/common";
 import { ApiConsumes, ApiTags } from "@nestjs/swagger";
 import { GeneralSettingService } from "./general-settings.service";
-import { GeneralSettingsDto } from "../dto/general-settings.dto";
+import { GeneralSettingsDto, HomeCategoriesSlugDto } from "../dto/general-settings.dto";
 import { FileSystemStoredFile, FormDataRequest } from "nestjs-form-data";
 import { Public } from "src/core/decorators/setPublicRoute.decorator";
 import { ChekcAbilities } from "src/core/decorators/abilities.decorator";

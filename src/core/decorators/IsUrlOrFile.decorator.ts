@@ -4,6 +4,7 @@ import {
     ValidationArguments,
     ValidatorConstraint,
     ValidatorConstraintInterface,
+    isString,
 } from 'class-validator';
 import { FileSystemStoredFile } from 'nestjs-form-data';
 
@@ -14,11 +15,10 @@ const backendUrl = process.env.BACKEND_URL
 class IsUrlOrFileConstraint implements ValidatorConstraintInterface {
     validate(value: any, args: ValidationArguments) {
         if (value instanceof FileSystemStoredFile) {
-            console.log(value)
             return validImageTypes.includes(value.mimetype);
         }
 
-        return value?.startsWith(backendUrl);
+        return isString(value) && value?.startsWith(backendUrl);
     }
 
     defaultMessage(args: ValidationArguments) {

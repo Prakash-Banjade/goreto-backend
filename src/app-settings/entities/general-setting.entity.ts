@@ -17,4 +17,7 @@ export class GeneralSetting extends BaseEntity {
 
     @Column({ type: 'varchar', nullable: true, default: '' })
     siteSubtitle: string;
+
+    @Column({ type: 'longtext', nullable: true })
+    footerDescription: string;
 }
