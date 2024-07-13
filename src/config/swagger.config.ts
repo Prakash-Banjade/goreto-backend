@@ -1,9 +1,11 @@
 import { INestApplication } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { AppSettingsModule } from "src/app-settings/app-settings.module";
 import { AuthModule } from "src/auth/auth.module";
 import { CartItemsModule } from "src/cart-items/cart-items.module";
 import { CartsModule } from "src/carts/carts.module";
 import { CategoriesModule } from "src/categories/categories.module";
+import { ContactRequestsModule } from "src/contact-requests/contact-requests.module";
 import { OrdersModule } from "src/orders/orders.module";
 import { PaymentsModule } from "src/payments/payments.module";
 import { AttributeOptionsModule } from "src/products/attribute-options/attribute-options.module";
@@ -45,6 +47,8 @@ export function setupSwagger(app: INestApplication): void {
             SkusModule,
             AttributesModule,
             AttributeOptionsModule,
+            AppSettingsModule,
+            ContactRequestsModule,
         ],
     });
 

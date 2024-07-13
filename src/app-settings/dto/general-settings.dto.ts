@@ -31,4 +31,17 @@ export class GeneralSettingsDto {
     @IsUrlOrFile()
     @IsOptional()
     collapseLogo?: FileSystemStoredFile | string;
+
+    @ApiPropertyOptional({ type: String, description: 'Footer description' })
+    @IsString()
+    @IsOptional()
+    footerDescription?: string;
+}
+
+export class HomeCategoriesSlugDto {
+    @ApiPropertyOptional({ type: String, description: 'Categories slugs to show in homepage' })
+    @IsString({ each: true })
+    @IsNotEmpty({ each: true })
+    @IsOptional()
+    homeCategoriesSlug?: string[]
 }

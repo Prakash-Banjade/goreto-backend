@@ -18,6 +18,15 @@ import { LocationSettingController } from './location-settings/location-settings
 import { LocationSettingService } from './location-settings/location-settings.service';
 import { LocationController } from './location-settings/location.controller';
 import { LocationService } from './location-settings/location.service';
+import { HomePageSetting } from './entities/homePage-setting.entity';
+import { HeroCarouselItem } from './entities/hero-carousel-item.entity';
+import { HomePageSettingController } from './homePage-settings/homePage-settings.controller';
+import { HomePageSettingService } from './homePage-settings/homePage-settings.service';
+import { HeroCarouselItemController } from './homePage-settings/hero-carousel-item.controller';
+import { HeroCarouselItemService } from './homePage-settings/hero-carousel-item.service';
+import { Newsletter } from './newsletter/entity/newsletter.entity';
+import { NewsletterController } from './newsletter/newsletter.controller';
+import { NewsletterService } from './newsletter/newsletter.service';
 
 @Module({
   imports: [
@@ -28,6 +37,9 @@ import { LocationService } from './location-settings/location.service';
       Faq,
       LocationSetting,
       Location,
+      HomePageSetting,
+      HeroCarouselItem,
+      Newsletter,
     ])
   ],
   controllers: [
@@ -37,6 +49,9 @@ import { LocationService } from './location-settings/location.service';
     FaqController,
     LocationSettingController,
     LocationController,
+    HomePageSettingController,
+    HeroCarouselItemController,
+    NewsletterController,
   ],
   providers: [
     GeneralSettingService,
@@ -45,6 +60,9 @@ import { LocationService } from './location-settings/location.service';
     FaqService,
     LocationSettingService,
     LocationService,
+    HomePageSettingService,
+    HeroCarouselItemService,
+    NewsletterService,
   ],
 })
 export class AppSettingsModule { }

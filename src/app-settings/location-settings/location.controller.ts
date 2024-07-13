@@ -4,8 +4,10 @@ import { CreateLocationDto } from "../dto/location-settings.dto";
 import { ChekcAbilities } from "src/core/decorators/abilities.decorator";
 import { Action } from "src/core/types/global.types";
 import { Public } from "src/core/decorators/setPublicRoute.decorator";
+import { ApiTags } from "@nestjs/swagger";
 
-@Controller()
+@ApiTags('Locations')
+@Controller('locations')
 export class LocationController {
     constructor(
         private readonly locationService: LocationService,
