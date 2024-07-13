@@ -231,7 +231,8 @@ export class OrdersService {
           sku: {
             product: true
           },
-        }
+        },
+        payment: true
       }
     })
     if (!existing) throw new NotFoundException('Order not found')
