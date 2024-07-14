@@ -232,6 +232,9 @@ export class OrdersService {
             product: true
           },
         },
+        shippingAddress: {
+          address: true
+        },
         payment: true
       }
     })
