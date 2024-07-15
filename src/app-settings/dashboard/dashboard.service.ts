@@ -15,7 +15,7 @@ export class DashboardDataService {
         const querybuilder = this.ordersRepo.createQueryBuilder('order')
 
         const defaultCount = {}
-        let startDate = new Date().toISOString(), endDate = new Date().toISOString();
+        let startDate = new Date(new Date().setHours(0, 0, 0, 0)).toISOString(), endDate = new Date().toISOString();
 
         switch (period) {
             case ReportPeriod.DAY:

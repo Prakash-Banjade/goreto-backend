@@ -111,7 +111,7 @@ export class OrdersService {
   async findAll(queryDto: OrderQueryDto, currentUser: AuthUser) {
     const queryBuilder = this.ordersRepo.createQueryBuilder('order');
 
-    let startDate = new Date().toISOString(), endDate = new Date().toISOString();
+    let startDate = new Date(new Date().setHours(0, 0, 0, 0)).toISOString(), endDate = new Date().toISOString();
     const adjustedEndDate = new Date(new Date(endDate).setDate(new Date(endDate).getDate() + 1));
 
     const deletedAtCondition = queryDto.deleted === Deleted.ONLY
