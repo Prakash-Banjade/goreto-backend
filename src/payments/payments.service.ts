@@ -25,6 +25,20 @@ export class PaymentsService {
         const payment = this.paymentsRepo.create({
           order: order,
           paymentMethod: paymentMethod,
+          status: PaymentStatus.COMPLETED
+        })
+
+        await this.paymentsRepository.savePayment(payment); // transaction
+
+        return {
+          message: `Be ready with amount ${CONSTANTS.defaultProductPriceUnit} ${order.totalAmount} on delivery. Thank you.`,
+        }
+      }
+
+      case PaymentMethod.CASH_ON_DELIVERY: {
+        const payment = this.paymentsRepo.create({
+          order: order,
+          paymentMethod: paymentMethod,
         })
 
         await this.paymentsRepository.savePayment(payment); // transaction
