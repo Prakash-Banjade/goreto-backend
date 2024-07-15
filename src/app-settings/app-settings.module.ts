@@ -27,6 +27,9 @@ import { HeroCarouselItemService } from './homePage-settings/hero-carousel-item.
 import { Newsletter } from './newsletter/entity/newsletter.entity';
 import { NewsletterController } from './newsletter/newsletter.controller';
 import { NewsletterService } from './newsletter/newsletter.service';
+import { DashboardController } from './dashboard/dashboard.controller';
+import { DashboardDataService } from './dashboard/dashboard.service';
+import { Order } from 'src/orders/entities/order.entity';
 
 @Module({
   imports: [
@@ -40,6 +43,7 @@ import { NewsletterService } from './newsletter/newsletter.service';
       HomePageSetting,
       HeroCarouselItem,
       Newsletter,
+      Order
     ])
   ],
   controllers: [
@@ -52,6 +56,7 @@ import { NewsletterService } from './newsletter/newsletter.service';
     HomePageSettingController,
     HeroCarouselItemController,
     NewsletterController,
+    DashboardController
   ],
   providers: [
     GeneralSettingService,
@@ -63,6 +68,7 @@ import { NewsletterService } from './newsletter/newsletter.service';
     HomePageSettingService,
     HeroCarouselItemService,
     NewsletterService,
+    DashboardDataService
   ],
 })
 export class AppSettingsModule { }
