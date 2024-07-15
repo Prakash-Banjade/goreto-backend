@@ -2,12 +2,14 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Payment } from './entities/payment.entity';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { Order } from 'src/orders/entities/order.entity';
-import { AuthUser, PaymentMethod, PaymentStatus } from 'src/core/types/global.types';
+import { AuthUser, PaymentMethod, PaymentStatus, ReportPeriod } from 'src/core/types/global.types';
 import { PaymentsRepository } from './repository/payment.repository';
 import { StripeService } from 'src/stripe/stripe.service';
 import { CONSTANTS } from 'src/core/CONSTANTS';
+import paginatedData from 'src/core/utils/paginatedData';
+import { PaymentQueryDto } from './dto/payment-query.dto';
 
 @Injectable()
 export class PaymentsService {
@@ -83,8 +85,56 @@ export class PaymentsService {
     }
   }
 
-  async findAll() {
-    return `This action returns all payments`;
+  async findAll(queryDto: PaymentQueryDto) {
+    const queryBuilder = this.paymentsRepo.createQueryBuilder('payment');
+
+    let startDate = new Date().toISOString(), endDate = new Date().toISOString();
+
+    switch (queryDto.period) {
+      case ReportPeriod.DAY:
+        startDate = new Date().toISOString()
+        endDate = new Date().toISOString()
+        break
+      case ReportPeriod.WEEK:
+        startDate = new Date(new Date().setDate(new Date().getDate() - 7)).toISOString()
+        endDate = new Date().toISOString()
+        break
+      case ReportPeriod.MONTH:
+        startDate = new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString()
+        endDate = new Date().toISOString()
+        break
+      case ReportPeriod.YEAR:
+        startDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString()
+        console.log(startDate)
+        endDate = new Date().toISOString()
+        break
+    }
+
+    const adjustedEndDate = new Date(new Date(endDate).setDate(new Date(endDate).getDate() + 1));
+
+    queryBuilder
+      .orderBy("payment.createdAt", queryDto.order)
+      .skip(queryDto.search ? undefined : queryDto.skip)
+      .take(queryDto.search ? undefined : queryDto.take)
+      .leftJoin('payment.order', 'order')
+      .where(new Brackets(qb => {
+        queryDto.trackingNumber && qb.andWhere("order.trackingNumber = :trackingNumber", { trackingNumber: queryDto.trackingNumber })
+        queryDto.period && qb.andWhere("payment.createdAt BETWEEN :startDate AND :endDate", { startDate, endDate: adjustedEndDate })
+        queryDto.dateFrom && qb.andWhere("payment.createdAt >= :dateFrom", { dateFrom: queryDto.dateFrom })
+        queryDto.dateTo && qb.andWhere("payment.createdAt <= :dateTo", { dateTo: queryDto.dateTo })
+      }))
+      .select([
+        'payment.id',
+        'order.id',
+        'payment.createdAt',
+        'order.totalAmount',
+        'payment.status',
+        'payment.paymentDate',
+        'payment.paymentMethod',
+        'order.trackingNumber'
+      ])
+
+    return paginatedData(queryDto, queryBuilder);
   }
 
   async findOne(id: string) {

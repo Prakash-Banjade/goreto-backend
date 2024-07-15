@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, Query } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
@@ -8,6 +8,8 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { User } from 'src/users/entities/user.entity';
 import { TransactionInterceptor } from 'src/core/interceptors/transaction.interceptor';
 import { CurrentUser } from 'src/core/decorators/currentuser.decorator';
+import { QueryDto } from 'src/core/dto/query.dto';
+import { PaymentQueryDto } from './dto/payment-query.dto';
 
 @ApiBearerAuth()
 @ApiTags('Payments')
@@ -15,10 +17,11 @@ import { CurrentUser } from 'src/core/decorators/currentuser.decorator';
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) { }
 
-  // @Get()
-  // findAll() {
-  //   return this.paymentsService.findAll();
-  // }
+  @Get()
+  @ChekcAbilities({ action: Action.READ, subject: 'all' })
+  async findAll(@Query() queryDto: PaymentQueryDto) {
+    return this.paymentsService.findAll(queryDto);
+  }
 
   @Get(':id')
   @ChekcAbilities({ action: Action.UPDATE, subject: 'all' })
