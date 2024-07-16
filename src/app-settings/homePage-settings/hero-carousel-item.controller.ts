@@ -5,6 +5,7 @@ import { CreateHeroCarouselItemDto } from "./dto/homePage-settings.dto";
 import { ChekcAbilities } from "src/core/decorators/abilities.decorator";
 import { FileSystemStoredFile, FormDataRequest } from "nestjs-form-data";
 import { Action } from "src/core/types/global.types";
+import { Public } from "src/core/decorators/setPublicRoute.decorator";
 
 @ApiTags('Hero Carousel Item')
 @Controller('hero-carousel-items')
@@ -21,12 +22,14 @@ export class HeroCarouselItemController {
         return await this.heroCarouselItemService.create(createHeroCarouselItemDto);
     }
 
+    @Public()
     @Get()
     @ChekcAbilities({ subject: 'all', action: Action.READ })
     async get() {
         return await this.heroCarouselItemService.findAll();
     }
 
+    @Public()
     @Get(':id')
     @ChekcAbilities({ subject: 'all', action: Action.READ })
     async findOne(@Param('id', ParseUUIDPipe) id: string) {
