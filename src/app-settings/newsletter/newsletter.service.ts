@@ -11,13 +11,13 @@ export class NewsletterService {
     ) { }
 
     async create(newsletterDto: NewsletterDto) {
-        const existing = await this.newsletterRepo.findOne({ where: { emall: newsletterDto.email } });
+        const existing = await this.newsletterRepo.findOne({ where: { email: newsletterDto.email } });
         if (existing) return {
             message: 'Subscribed',
         };
         
         const newsletter = new Newsletter();
-        newsletter.emall = newsletterDto.email;
+        newsletter.email = newsletterDto.email;
         return await this.newsletterRepo.save(newsletter);
     }
 

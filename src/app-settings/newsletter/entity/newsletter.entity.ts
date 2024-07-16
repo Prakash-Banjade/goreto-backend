@@ -4,5 +4,5 @@ import { Column, Entity } from "typeorm";
 @Entity()
 export class Newsletter extends BaseEntity {
     @Column({type: 'varchar'})
-    emall: string
+    email: string
 }
