@@ -22,14 +22,22 @@ require('dotenv').config();
 export class AuthController {
     constructor(private authService: AuthService) { }
 
-    cookieOptions: CookieOptions = {
+    refresshCookieOptions: CookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'none',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 day
     }
+    accessCookieOptions: CookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'none',
+        maxAge: 15 * 60 * 1000, // 15 min
+    }
 
-    private readonly refreshHeaderKey = process.env.REFRESH_HEADER_KEY
+    private readonly ACCESS_TOKEN_KEY = 'access_token';
+    private readonly REFRESH_TOKEN_KEY = 'refresh_token';
+    private readonly REFRESH_HEADER_KEY = process.env.REFRESH_HEADER_KEY
 
     @Public()
     @HttpCode(HttpStatus.OK)
@@ -37,10 +45,11 @@ export class AuthController {
     @ApiConsumes('multipart/form-data')
     @FormDataRequest({ storage: FileSystemStoredFile })
     async signIn(@Body() signInDto: SignInDto, @Res({ passthrough: true }) res: Response, @Req() req: Request) {
-        const { access_token, new_refresh_token, payload } = await this.authService.signIn(signInDto, req, res, this.cookieOptions);
+        const { access_token, new_refresh_token, payload } = await this.authService.signIn(signInDto, req, res, this.refresshCookieOptions);
 
-        res.cookie('refresh_token', new_refresh_token, this.cookieOptions);
-        res.set(this.refreshHeaderKey, `${new_refresh_token}`);
+        res.cookie(this.ACCESS_TOKEN_KEY, access_token, this.refresshCookieOptions);
+        res.cookie(this.REFRESH_TOKEN_KEY, new_refresh_token, this.refresshCookieOptions);
+        res.set(this.REFRESH_HEADER_KEY, `${new_refresh_token}`);
 
         return { access_token, refreshToken: new_refresh_token, payload };
     }
@@ -56,10 +65,15 @@ export class AuthController {
         const refresh_token = req.cookies?.refresh_token;
         if (!refresh_token) throw new UnauthorizedException();
 
-        const { new_access_token, new_refresh_token, payload } = await this.authService.refresh(refresh_token, res, this.cookieOptions, this.refreshHeaderKey);
+        res.clearCookie(this.ACCESS_TOKEN_KEY, this.accessCookieOptions); // CLEAR COOKIE, BCZ A NEW ONE IS TO BE GENERATED
+        res.clearCookie(this.REFRESH_TOKEN_KEY, this.refresshCookieOptions); // CLEAR COOKIE, BCZ A NEW ONE IS TO BE GENERATED
+        res.removeHeader(this.REFRESH_HEADER_KEY);
 
-        res.cookie('refresh_token', new_refresh_token, this.cookieOptions);
-        res.set(this.refreshHeaderKey, `${new_refresh_token}`);
+        const { new_access_token, new_refresh_token, payload } = await this.authService.refresh(refresh_token);
+
+        res.cookie(this.ACCESS_TOKEN_KEY, new_access_token, this.accessCookieOptions);
+        res.cookie(this.REFRESH_TOKEN_KEY, new_refresh_token, this.refresshCookieOptions);
+        res.set(this.REFRESH_HEADER_KEY, `${new_refresh_token}`);
 
         return { access_token: new_access_token, refresh_token: new_refresh_token, payload };
     }
@@ -95,8 +109,9 @@ export class AuthController {
 
         await this.authService.logout(refresh_token);
 
-        res.clearCookie('refresh_token', this.cookieOptions);
-        res.removeHeader(this.refreshHeaderKey);
+        res.clearCookie(this.ACCESS_TOKEN_KEY, this.accessCookieOptions);
+        res.clearCookie(this.REFRESH_TOKEN_KEY, this.refresshCookieOptions);
+        res.removeHeader(this.REFRESH_HEADER_KEY);
         return;
     }
 

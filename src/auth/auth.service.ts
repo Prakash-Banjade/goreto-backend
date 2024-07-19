@@ -146,7 +146,7 @@ export class AuthService {
 
     await this.authRepository.saveVerificationEmailPending(emailVerificationPending);
 
-    const { previewUrl } = await this.mailService.sendEmailVerificationOtp(account, otp);
+    const { previewUrl } = await this.mailService.sendEmailVerificationOtp(account, otp, verificationToken);
 
     return {
       message: 'OTP is valid for 30 hours',
@@ -206,10 +206,7 @@ export class AuthService {
     };
   }
 
-  async refresh(refresh_token: string, res: Response, cookieOptions: CookieOptions, refreshHeaderKey: string) { // IMPLEMENTING REFRESH TOKEN RORATION WITH REUSE DETECTION
-    res.clearCookie('refresh_token', cookieOptions); // CLEAR COOKIE, BCZ A NEW ONE IS TO BE GENERATED
-    res.removeHeader(refreshHeaderKey);
-
+  async refresh(refresh_token: string) { // IMPLEMENTING REFRESH TOKEN RORATION WITH REUSE DETECTION
     // Is refresh token in db?
     const foundAccount = await this.accountsRepo.findOne({
       where: { refresh_token: Like(`%${refresh_token}%`) },
