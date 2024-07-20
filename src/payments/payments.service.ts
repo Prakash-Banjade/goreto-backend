@@ -10,6 +10,7 @@ import { StripeService } from 'src/stripe/stripe.service';
 import { CONSTANTS } from 'src/core/CONSTANTS';
 import paginatedData from 'src/core/utils/paginatedData';
 import { PaymentQueryDto } from './dto/payment-query.dto';
+import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
 
 @Injectable()
 export class PaymentsService {
@@ -70,7 +71,9 @@ export class PaymentsService {
     }
   }
 
-  async confirmPayment(paymentIntentId: string, currentUser: AuthUser) {
+  async confirmPayment(confirmPaymentDto: ConfirmPaymentDto, currentUser: AuthUser) {
+    const { paymentIntentId } = confirmPaymentDto
+
     const payment = await this.paymentsRepo.findOne({
       where: { paymentIntentId, order: { user: { id: currentUser.userId } } }
     })
@@ -89,9 +92,12 @@ export class PaymentsService {
       }
     }
 
-    await this.stripeService.confirmPayment(paymentIntentId)
+    const paymentIntent = await this.stripeService.confirmPayment(paymentIntentId) // confirm the payment intent
 
     payment.status = PaymentStatus.COMPLETED
+    payment.stripePaymentMethod = `${paymentIntent.payment_method}`
+    payment.clientSecret = paymentIntent.client_secret
+
     await this.paymentsRepository.savePayment(payment)
 
     return {
@@ -119,7 +125,6 @@ export class PaymentsService {
         break
       case ReportPeriod.YEAR:
         startDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString()
-        console.log(startDate)
         endDate = new Date().toISOString()
         break
     }

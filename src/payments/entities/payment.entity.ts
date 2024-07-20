@@ -32,4 +32,10 @@ export class Payment extends BaseEntity {
 
     @Column({ type: 'uuid', nullable: true })
     paymentIntentId: string
+
+    @Column({ type: 'varchar', nullable: true })
+    stripePaymentMethod: string
+
+    @Column({ type: 'varchar', nullable: true })
+    clientSecret: string
 }

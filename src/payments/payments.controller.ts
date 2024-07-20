@@ -10,6 +10,7 @@ import { TransactionInterceptor } from 'src/core/interceptors/transaction.interc
 import { CurrentUser } from 'src/core/decorators/currentuser.decorator';
 import { QueryDto } from 'src/core/dto/query.dto';
 import { PaymentQueryDto } from './dto/payment-query.dto';
+import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
 
 @ApiBearerAuth()
 @ApiTags('Payments')
@@ -32,8 +33,8 @@ export class PaymentsController {
   @Post('confirm')
   @UseInterceptors(TransactionInterceptor)
   @ChekcAbilities({ action: Action.UPDATE, subject: User })
-  async create(@Body('paymentIndentId') paymentIndentId: string, @CurrentUser() currentUser: AuthUser) {
-    return this.paymentsService.confirmPayment(paymentIndentId, currentUser);
+  async create(@Body() confirmPaymentDto: ConfirmPaymentDto, @CurrentUser() currentUser: AuthUser) {
+    return this.paymentsService.confirmPayment(confirmPaymentDto, currentUser);
   }
 
   @Patch(':id')
