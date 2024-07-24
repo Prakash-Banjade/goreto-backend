@@ -6,18 +6,20 @@ import { Review } from './entities/review.entity';
 import { Between, Brackets, ILike, IsNull, Not, Or, Repository } from 'typeorm';
 import { UsersService } from 'src/users/users.service';
 import { ProductsService } from 'src/products/products.service';
-import { AuthUser } from 'src/core/types/global.types';
+import { AuthUser, OrderStatus } from 'src/core/types/global.types';
 import { Deleted } from 'src/core/dto/query.dto';
 import paginatedData from 'src/core/utils/paginatedData';
 import { ReviewQueryDto } from './entities/review-query.dto';
 import { ReviewsRepository } from './review.repository';
 import { Product } from 'src/products/entities/product.entity';
+import { OrderItem } from 'src/orders/entities/order-item.entity';
 
 @Injectable()
 export class ReviewsService {
   constructor(
     @InjectRepository(Review) private readonly reviewsRepo: Repository<Review>,
     @InjectRepository(Product) private readonly productsRepo: Repository<Product>,
+    @InjectRepository(OrderItem) private readonly orderItemRepo: Repository<OrderItem>,
     private readonly usersService: UsersService,
     private readonly productsService: ProductsService,
   ) { }
@@ -29,6 +31,21 @@ export class ReviewsService {
     // CHECK IF REVIEW ALREADY EXISTS
     const existingReview = await this.getProductReviewByUser(createReviewDto.productSlug, currentUser);
     if (existingReview) throw new BadRequestException('Review already exists');
+
+    // CHECK IF THE USER HAS PURCHASED THE PRODUCT
+    const orderItem = await this.orderItemRepo.findOne({
+      where: {
+        order: {
+          user: {
+            id: currentUser.userId,
+          },
+          status: OrderStatus.COMPLETED,
+        },
+        sku: { product: { slug: createReviewDto.productSlug } },
+      },
+    })
+
+    if (!orderItem) throw new BadRequestException('You have not purchased this product yet');
 
     const review = this.reviewsRepo.create({
       comment: createReviewDto.comment,
