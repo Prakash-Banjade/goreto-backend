@@ -1,6 +1,5 @@
 import { BaseEntity } from "src/core/entities/base.entity";
 import { Order } from "src/orders/entities/order.entity";
-import { Product } from "src/products/entities/product.entity";
 import { Sku } from "src/products/skus/entities/sku.entity";
 import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne } from "typeorm";
 
@@ -21,6 +20,6 @@ export class OrderItem extends BaseEntity {
     @BeforeInsert()
     @BeforeUpdate()
     calculatePrice() {
-        this.price = this.sku?.salePrice * this.quantity ?? 0
+        this.price = (this.sku?.salePrice * this.quantity) || 0
     }
 }
