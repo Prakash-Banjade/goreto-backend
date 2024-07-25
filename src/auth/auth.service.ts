@@ -15,7 +15,7 @@ import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { CookieOptions, Request, Response } from 'express';
-import { AuthUser } from 'src/core/types/global.types';
+import { AuthProvider, AuthUser } from 'src/core/types/global.types';
 import { Account } from 'src/accounts/entities/account.entity';
 import { User } from 'src/users/entities/user.entity';
 import { UsersRepository } from 'src/users/repository/user.repository';
@@ -30,6 +30,8 @@ import { generateHashedOPT } from 'src/core/utils/generateOPT';
 import { AuthRepository } from './repository/auth.repository';
 import { EmailVerificationDto } from './dto/email-verification.dto';
 import { ChangePasswordDto } from './dto/changePassword.dto';
+import { GoogleOAuthDto } from './dto/googleOAuth.dto';
+import { OAuth2Client } from 'google-auth-library';
 require('dotenv').config();
 
 @Injectable()
@@ -47,6 +49,10 @@ export class AuthService {
     @InjectRepository(EmailVerificationPending) private emailVerificationPendingRepo: Repository<EmailVerificationPending>,
     private mailService: MailService,
   ) { }
+
+  private readonly clientId = process.env.GOOGLE_CLIENT_ID;
+  private readonly clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  private readonly oAuth2Client = new OAuth2Client(this.clientId, this.clientSecret, 'postmessage');
 
   async signIn(signInDto: SignInDto, req: Request, res: Response, cookieOptions: CookieOptions) {
     const refresh_token = req.cookies?.refresh_token;
@@ -90,6 +96,90 @@ export class AuthService {
     foundAccount.refresh_token = [...newRefreshTokenArray, new_refresh_token];
 
     await this.accountsRepo.save(foundAccount);
+
+    return { access_token, new_refresh_token, payload };
+  }
+
+  async googleOAuthLogin(googleOAuthDto: GoogleOAuthDto, req: Request, res: Response, cookieOptions: CookieOptions) {
+    const refresh_token = req.cookies?.refresh_token;
+    if (refresh_token) res.clearCookie('refresh_token', cookieOptions); // CLEAR COOKIE, BCZ A NEW ONE IS TO BE GENERATED
+
+    const { code } = googleOAuthDto;
+
+    const { tokens } = await this.oAuth2Client.getToken(code); // exchange code for tokens
+    const google_access_token = tokens?.access_token
+
+    // fetch user data
+    const { data }: { data: any } = await this.oAuth2Client.request({
+      url: 'https://www.googleapis.com/oauth2/v3/userinfo',
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${google_access_token}`,
+        Accept: 'application/json'
+      },
+    });
+
+    const { email, name, picture } = data;
+
+    const foundAccount = await this.accountsRepo.findOne({
+      where: { email },
+      relations: { user: true }
+    });
+    let payload: AuthUser;
+    let access_token: string;
+    let new_refresh_token: string;
+
+    if (!foundAccount) {
+      const newAccount = this.accountsRepo.create({
+        email,
+        firstName: name,
+        provider: AuthProvider.GOOGLE,
+        isVerified: true,
+      })
+
+      const savedAccount = await this.accountRepository.insert(newAccount);
+
+      const newUser = this.usersRepo.create({
+        account: savedAccount,
+        image: picture,
+      })
+
+      const savedUser = await this.userRepository.createUser(newUser);
+
+      payload = {
+        email: savedAccount.email,
+        accountId: savedAccount.id,
+        userId: savedUser.id,
+        name: savedAccount.firstName,
+        role: savedAccount.role,
+      }
+
+      // GENERATE TOKENS WITH ABOVE PAYLOAD
+      access_token = await this.createAccessToken(payload);
+      new_refresh_token = await this.createRefreshToken(payload);
+
+      savedAccount.refresh_token = [new_refresh_token];
+      await this.accountRepository.insert(savedAccount);
+
+    } else {
+      payload = {
+        email: foundAccount.email,
+        userId: foundAccount.user.id,
+        accountId: foundAccount.id,
+        name: foundAccount.firstName + ' ' + foundAccount.lastName,
+        role: foundAccount.role,
+      }
+
+      // GENERATE TOKENS WITH ABOVE PAYLOAD
+      access_token = await this.createAccessToken(payload);
+      new_refresh_token = await this.createRefreshToken(payload);
+
+      const newRefreshTokenArray = !refresh_token ? (foundAccount.refresh_token ?? []) : (foundAccount?.refresh_token?.filter((rt) => rt !== refresh_token) ?? [])
+
+      foundAccount.refresh_token = [...newRefreshTokenArray, new_refresh_token];
+
+      await this.accountRepository.insert(foundAccount);
+    }
 
     return { access_token, new_refresh_token, payload };
   }

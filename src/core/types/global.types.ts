@@ -61,3 +61,8 @@ export enum ReportPeriod {
     MONTH = 'month',
     YEAR = 'year'
 }
+
+export enum AuthProvider {
+    GOOGLE = 'google',
+    CREDENTIALS = 'credentials',
+}

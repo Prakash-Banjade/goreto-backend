@@ -15,6 +15,7 @@ import { RefreshTokenGuard } from './guards/refresh-token.guard';
 import { CurrentUser } from 'src/core/decorators/currentuser.decorator';
 import { AuthUser } from 'src/core/types/global.types';
 import { ChangePasswordDto } from './dto/changePassword.dto';
+import { GoogleOAuthDto } from './dto/googleOAuth.dto';
 require('dotenv').config();
 
 @ApiTags('Authentication')
@@ -76,6 +77,21 @@ export class AuthController {
         res.set(this.REFRESH_HEADER_KEY, `${new_refresh_token}`);
 
         return { access_token: new_access_token, refresh_token: new_refresh_token, payload };
+    }
+
+    @Public()
+    @Post('googleOAuthLogin')
+    @ApiConsumes('multipart/form-data')
+    @FormDataRequest({ storage: FileSystemStoredFile })
+    @UseInterceptors(TransactionInterceptor)
+    async googleOAuthLogin(@Body() googleOAuthDto: GoogleOAuthDto, @Res({ passthrough: true }) res: Response, @Req() req: Request) {
+        const { access_token, new_refresh_token, payload } = await this.authService.googleOAuthLogin(googleOAuthDto, req, res, this.refresshCookieOptions);
+
+        res.cookie(this.ACCESS_TOKEN_KEY, access_token, this.refresshCookieOptions);
+        res.cookie(this.REFRESH_TOKEN_KEY, new_refresh_token, this.refresshCookieOptions);
+        res.set(this.REFRESH_HEADER_KEY, `${new_refresh_token}`);
+
+        return { access_token, refreshToken: new_refresh_token, payload };
     }
 
     @Public()

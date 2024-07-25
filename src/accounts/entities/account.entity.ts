@@ -1,7 +1,7 @@
 import { BaseEntity } from "src/core/entities/base.entity";
 import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, OneToOne } from "typeorm";
 import * as bcrypt from 'bcrypt';
-import { Roles } from "src/core/types/global.types";
+import { AuthProvider, Roles } from "src/core/types/global.types";
 import { BadRequestException } from "@nestjs/common";
 import { User } from "src/users/entities/user.entity";
 
@@ -16,8 +16,11 @@ export class Account extends BaseEntity {
     @Column({ type: 'varchar' })
     email!: string;
 
-    @Column({ type: 'varchar' })
+    @Column({ type: 'varchar', nullable: true })
     password!: string;
+
+    @Column({ type: 'enum', enum: AuthProvider, default: AuthProvider.CREDENTIALS })
+    provider: AuthProvider;
 
     @Column({ type: 'enum', enum: Roles, default: Roles.USER })
     role: Roles;
