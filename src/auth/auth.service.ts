@@ -109,6 +109,8 @@ export class AuthService {
     const { tokens } = await this.oAuth2Client.getToken(code); // exchange code for tokens
     const google_access_token = tokens?.access_token
 
+    if (!google_access_token) throw new BadRequestException('Invalid code');
+
     // fetch user data
     const { data }: { data: any } = await this.oAuth2Client.request({
       url: 'https://www.googleapis.com/oauth2/v3/userinfo',
@@ -118,6 +120,8 @@ export class AuthService {
         Accept: 'application/json'
       },
     });
+
+    if (!data) throw new BadRequestException('Invalid credentials');
 
     const { email, name, picture } = data;
 
