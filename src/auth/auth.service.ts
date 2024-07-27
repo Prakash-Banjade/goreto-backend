@@ -31,7 +31,7 @@ import { AuthRepository } from './repository/auth.repository';
 import { EmailVerificationDto } from './dto/email-verification.dto';
 import { ChangePasswordDto } from './dto/changePassword.dto';
 import { GoogleOAuthDto } from './dto/googleOAuth.dto';
-import { OAuth2Client } from 'google-auth-library';
+import { Credentials, OAuth2Client } from 'google-auth-library';
 require('dotenv').config();
 
 @Injectable()
@@ -52,7 +52,8 @@ export class AuthService {
 
   private readonly clientId = process.env.GOOGLE_CLIENT_ID;
   private readonly clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  private readonly oAuth2Client = new OAuth2Client(this.clientId, this.clientSecret, 'postmessage');
+  private readonly redirectUri = process.env.GOOGLE_REDIRECT_URI
+  private readonly oAuth2Client = new OAuth2Client(this.clientId, this.clientSecret, this.redirectUri);
 
   async signIn(signInDto: SignInDto, req: Request, res: Response, cookieOptions: CookieOptions) {
     const refresh_token = req.cookies?.refresh_token;
@@ -61,6 +62,7 @@ export class AuthService {
       where: {
         email: signInDto.email,
         isVerified: true,
+        provider: AuthProvider.CREDENTIALS,
       },
       relations: {
         user: true,
@@ -107,24 +109,11 @@ export class AuthService {
     const { code } = googleOAuthDto;
 
     const { tokens } = await this.oAuth2Client.getToken(code); // exchange code for tokens
-    const google_access_token = tokens?.access_token
 
-    if (!google_access_token) throw new BadRequestException('Invalid code');
+    const { email, family_name, given_name, picture, email_verified } = await this.getGoogleUser(tokens);
+    if (!email_verified) throw new BadRequestException('Email not verified');
 
-    // fetch user data
-    const { data }: { data: any } = await this.oAuth2Client.request({
-      url: 'https://www.googleapis.com/oauth2/v3/userinfo',
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${google_access_token}`,
-        Accept: 'application/json'
-      },
-    });
-
-    if (!data) throw new BadRequestException('Invalid credentials');
-
-    const { email, name, picture } = data;
-
+    // SEARCH FOR THE ACCOUNT IN DB
     const foundAccount = await this.accountsRepo.findOne({
       where: { email },
       relations: { user: true }
@@ -133,12 +122,15 @@ export class AuthService {
     let access_token: string;
     let new_refresh_token: string;
 
+    // IF NOT FOUND, CREATE A NEW ACCOUNT
     if (!foundAccount) {
       const newAccount = this.accountsRepo.create({
         email,
-        firstName: name,
+        firstName: given_name,
+        lastName: family_name ?? '',
         provider: AuthProvider.GOOGLE,
-        isVerified: true,
+        isVerified: email_verified,
+        password: null,
       })
 
       const savedAccount = await this.accountRepository.insert(newAccount);
@@ -186,6 +178,11 @@ export class AuthService {
     }
 
     return { access_token, new_refresh_token, payload };
+  }
+
+  private async getGoogleUser(tokens: Credentials) {
+    const loginTicket = await this.oAuth2Client.verifyIdToken({ idToken: tokens.id_token, audience: process.env.GOOGLE_CLIENT_ID });
+    return loginTicket.getPayload()
   }
 
   async createAccessToken(payload: AuthUser) {

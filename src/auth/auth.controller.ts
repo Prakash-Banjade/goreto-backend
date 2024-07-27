@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UnauthorizedException, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UnauthorizedException, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/signIn.dto';
 import { CookieOptions, Request, Response } from 'express';
@@ -52,7 +52,7 @@ export class AuthController {
         res.cookie(this.REFRESH_TOKEN_KEY, new_refresh_token, this.refresshCookieOptions);
         res.set(this.REFRESH_HEADER_KEY, `${new_refresh_token}`);
 
-        return { access_token, refreshToken: new_refresh_token, payload };
+        return { access_token, refresh_token: new_refresh_token, payload };
     }
 
     @Public()
@@ -62,7 +62,7 @@ export class AuthController {
     @UseInterceptors(TransactionInterceptor)
     @UseGuards(RefreshTokenGuard)
     @FormDataRequest({ storage: FileSystemStoredFile })
-    async refreshToken(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    async refresh_token(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
         const refresh_token = req.cookies?.refresh_token;
         if (!refresh_token) throw new UnauthorizedException();
 
@@ -91,7 +91,7 @@ export class AuthController {
         res.cookie(this.REFRESH_TOKEN_KEY, new_refresh_token, this.refresshCookieOptions);
         res.set(this.REFRESH_HEADER_KEY, `${new_refresh_token}`);
 
-        return { access_token, refreshToken: new_refresh_token, payload };
+        return { access_token, refresh_token: new_refresh_token, payload };
     }
 
     @Public()

@@ -37,9 +37,9 @@ export class Account extends BaseEntity {
 
     @BeforeInsert()
     hashPassword() {
-        if (!this.password) throw new BadRequestException('Password required');
+        if (this.provider === AuthProvider.CREDENTIALS && !this.password) throw new BadRequestException('Password required');
 
-        this.password = bcrypt.hashSync(this.password, 10);
+        this.password = this.provider === AuthProvider.GOOGLE ? null : bcrypt.hashSync(this.password, 10);
     }
 
     @BeforeInsert()
