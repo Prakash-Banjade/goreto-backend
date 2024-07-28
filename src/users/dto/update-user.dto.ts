@@ -1,4 +1,4 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDateString, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Length } from 'class-validator';
 import { FileSystemStoredFile } from 'nestjs-form-data';
 import { IsUrlOrFile } from 'src/core/decorators/IsUrlOrFile.decorator';
@@ -23,7 +23,7 @@ export class UpdateUserDto {
     @IsNotEmpty()
     @IsOptional()
     email?: string;
-    
+
     @ApiPropertyOptional({ type: 'string', description: 'A valid UAE based phone number' })
     @IsPhoneNumber('AE')
     @IsOptional()
@@ -38,9 +38,10 @@ export class UpdateUserDto {
     @IsDateString({ strict: true })
     @IsOptional()
     dob?: string
+}
 
-    @ApiPropertyOptional({ type: 'string', format: 'binary', description: 'Profile Image' })
+export class UpdateProfileImageDto {
+    @ApiProperty({ type: 'string', format: 'binary', description: 'Profile Image' })
     @IsUrlOrFile()
-    @IsOptional()
-    image?: string | FileSystemStoredFile
+    image?: FileSystemStoredFile | string
 }

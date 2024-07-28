@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Order } from './entities/order.entity';
 import { Brackets, Equal, IsNull, Not, Or, Repository } from 'typeorm';
 import { OrderQueryDto } from './dto/order-query.dto';
-import { AuthUser, OrderStatus, Roles } from 'src/core/types/global.types';
+import { AuthUser, OrderStatus, PaymentStatus, Roles } from 'src/core/types/global.types';
 import { UsersService } from 'src/users/users.service';
 import { CartsService } from 'src/carts/carts.service';
 import { ShippingAddressesService } from 'src/shipping-addresses/shipping-addresses.service';
@@ -20,7 +20,6 @@ import { PaymentsService } from 'src/payments/payments.service';
 import { Sku } from 'src/products/skus/entities/sku.entity';
 import { SkuRepository } from 'src/products/skus/repository/sku.repository';
 import { CartItem } from 'src/cart-items/entities/cart-item.entity';
-import { Product } from 'src/products/entities/product.entity';
 
 @Injectable()
 export class OrdersService {
@@ -29,7 +28,6 @@ export class OrdersService {
     @InjectRepository(CanceledOrder) private readonly canceledOrderRepo: Repository<CanceledOrder>,
     private readonly ordersRepository: OrdersRepository,
     @InjectRepository(OrderItem) private readonly orderItemsRepo: Repository<OrderItem>,
-    @InjectRepository(Product) private readonly productRepo: Repository<Product>,
     private readonly orderItemsRepository: OrderItemsRepository,
     @InjectRepository(Sku) private readonly skuRepo: Repository<Sku>,
     private readonly skuRepository: SkuRepository,
@@ -109,8 +107,12 @@ export class OrdersService {
     await this.skuRepository.saveSku(productSku); // transaction
   }
 
+
   async findAll(queryDto: OrderQueryDto, currentUser: AuthUser) {
     const queryBuilder = this.ordersRepo.createQueryBuilder('order');
+
+    let startDate = new Date(new Date().setHours(0, 0, 0, 0)).toISOString(), endDate = new Date().toISOString();
+    const adjustedEndDate = new Date(new Date(endDate).setDate(new Date(endDate).getDate() + 1));
 
     const deletedAtCondition = queryDto.deleted === Deleted.ONLY
       ? 'order.deletedAt IS NOT NULL'
@@ -160,6 +162,10 @@ export class OrdersService {
         'payment.paymentMethod',
         'payment.status',
       ])
+
+    if (queryDto.recent === 'true') {
+      queryBuilder.andWhere('order.createdAt BETWEEN :startDate AND :endDate', { startDate, endDate: adjustedEndDate })
+    }
 
     return paginatedData(queryDto, queryBuilder);
   }
@@ -225,14 +231,41 @@ export class OrdersService {
     const userId = currentUser.role === Roles.ADMIN ? undefined : currentUser.userId
 
     const existing = await this.ordersRepo.findOne({
-      where: { id, user: { id: userId } },
+      where: [
+        { id, user: { id: userId } },
+        { trackingNumber: id, user: { id: userId } }
+      ],
       relations: {
+        user: {
+          account: true
+        },
         orderItems: {
           sku: {
             product: true
           },
         },
+        shippingAddress: {
+          address: true
+        },
         payment: true
+      },
+      select: {
+        trackingNumber: true,
+        id: true,
+        orderDate: true,
+        totalAmount: true,
+        status: true,
+        orderItems: true,
+        user: {
+          id: true,
+          phone: true,
+          account: {
+            firstName: true,
+            lastName: true,
+            id: true,
+            email: true
+          }
+        }
       }
     })
     if (!existing) throw new NotFoundException('Order not found')
@@ -246,11 +279,12 @@ export class OrdersService {
     })
     if (!existing) throw new NotFoundException('Order not found')
 
-    if (existing.status === OrderStatus.DELIVERED || existing.status === OrderStatus.CANCELLED) throw new BadRequestException('Order already delivered')
+    if (existing.status === OrderStatus.COMPLETED || existing.status === OrderStatus.CANCELLED) throw new BadRequestException('Order already delivered')
 
     existing.status = updateOrderDto.status;
 
     await this.ordersRepository.saveOrder(existing); // transaction
+    updateOrderDto.status === OrderStatus.COMPLETED && await this.paymentService.update(existing.payment.id, { status: PaymentStatus.COMPLETED })
 
     // TODO: NOTIFY CUSTOMER BY SENDING EMAIL ABOUT THE ORDER STATUS
 
@@ -263,7 +297,7 @@ export class OrdersService {
     const existing = await this.findOne(id, currentUser);
     if (!existing) throw new NotFoundException('Order not found')
 
-    if ((existing.status !== OrderStatus.PENDING) && (existing.status !== OrderStatus.PROCESSING)) throw new BadRequestException('Order cannot be cancelled now.')
+    if (existing.status !== OrderStatus.PENDING) throw new BadRequestException('Order cannot be cancelled now.')
 
     // INCREASE THE PRODUCT STOCK
     for (const orderItem of existing.orderItems) {
@@ -284,6 +318,7 @@ export class OrdersService {
       description: cancelOrderDto?.description
     })
     await this.ordersRepository.cancelOrder(canceledOrder);
+    await this.paymentService.update(existing.payment.id, { status: PaymentStatus.FAILED });
 
     return {
       message: "Order cancelled",

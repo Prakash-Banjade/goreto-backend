@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileImageDto, UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Brackets, IsNull, Not, Or, Repository } from 'typeorm';
@@ -78,13 +78,9 @@ export class UsersService {
     const existingAccount = await this.accountRepo.findOneBy({ id: currentUser.accountId });
     if (!existingAccount) throw new InternalServerErrorException('Unable to update the associated profile. Please contact support.');
 
-    // evaluate profile image
-    const image = updateUserDto.image ? getImageURL(updateUserDto.image) : existingUser.image;
-
     // update user
     Object.assign(existingUser, {
       ...updateUserDto,
-      image,
     });
 
     await this.usersRepository.save(existingUser);
@@ -106,6 +102,16 @@ export class UsersService {
     return {
       message: 'Profile Updated'
     }
+  }
+
+  async updateImage(updateProfileImageDto: UpdateProfileImageDto, currentUser: AuthUser) {
+    const existingUser = await this.findOne(currentUser.userId);
+
+    const image = getImageURL(updateProfileImageDto.image);
+
+    existingUser.image = image;
+
+    await this.usersRepository.save(existingUser);
   }
 
   async remove(id: string) {

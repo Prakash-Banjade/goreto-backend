@@ -31,11 +31,12 @@ export enum OrderStatus {
     PENDING = 'pending',
     PROCESSING = 'processing',
     SHIPPED = 'shipped',
-    DELIVERED = 'delivered',
+    COMPLETED = 'completed',
     CANCELLED = 'cancelled',
 }
 
 export enum PaymentMethod {
+    CASH_ON_DELIVERY = 'cashOnDelivery',
     CASH = 'cash',
     CREDIT = 'credit',
     PAYPAL = 'paypal',
@@ -52,4 +53,16 @@ export enum PaymentStatus {
 export enum ProductType {
     SIMPLE = 'simple',
     VARIABLE = 'variable',
+}
+
+export enum ReportPeriod {
+    DAY = 'day',
+    WEEK = 'week',
+    MONTH = 'month',
+    YEAR = 'year'
+}
+
+export enum AuthProvider {
+    GOOGLE = 'google',
+    CREDENTIALS = 'credentials',
 }

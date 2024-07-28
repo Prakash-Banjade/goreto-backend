@@ -48,8 +48,17 @@ export class ProductQueryDto extends QueryDto {
     @ApiPropertyOptional({ type: String, description: 'Stock count' })
     @Transform(({ value }) => {
         if (isNaN(Number(value))) throw new BadRequestException('Invalid product count');
+        if (Number(value) < 0) throw new BadRequestException('Invalid product count');
         return Number(value);
     })
     @IsOptional()
-    stockQuantity?: number
+    minStockQuantity?: number
+
+    @ApiPropertyOptional({ type: String, description: 'Stock count' })
+    @Transform(({ value }) => {
+        if (isNaN(Number(value))) throw new BadRequestException('Invalid product count');
+        return Number(value);
+    })
+    @IsOptional()
+    maxStockQuantity?: number
 }

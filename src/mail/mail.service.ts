@@ -11,14 +11,15 @@ export class MailService {
         private readonly configService: ConfigService
     ) { }
 
-    async sendEmailVerificationOtp(account: Account, otp: number) {
+    async sendEmailVerificationOtp(account: Account, otp: number, verificationToken: string) {
         const result = await this.mailerService.sendMail({
             to: account.email,
             subject: 'Email verification',
             template: './sendEmailVerificationOtp', // `.hbs` extension is appended automatically
             context: { // ✏️ filling curly brackets with content
                 name: account.firstName + ' ' + account.lastName,
-                otp: otp
+                otp: otp,
+                url: `${this.configService.get('CLIENT_URL')}/verify-email/${verificationToken}`,
             },
         });
 

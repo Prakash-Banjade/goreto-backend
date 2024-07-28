@@ -133,6 +133,8 @@ export class ProductsService {
         queryDto.priceTo && qb.andWhere("salePrice <= :priceTo", { priceTo: queryDto.priceTo });
         queryDto.ratingFrom && queryDto.ratingFrom > 1 && qb.andWhere("product.rating >= :ratingFrom", { ratingFrom: queryDto.ratingFrom });
         queryDto.ratingTo && qb.andWhere("product.rating <= :ratingTo", { ratingTo: queryDto.ratingTo });
+        queryDto.minStockQuantity && qb.andWhere("sku.stockQuantity >= :stockQuantity", { stockQuantity: queryDto.minStockQuantity });
+        queryDto.maxStockQuantity && qb.andWhere("sku.stockQuantity <= :stockQuantity", { stockQuantity: queryDto.maxStockQuantity });
       }));
 
     return paginatedData(queryDto, queryBuilder);

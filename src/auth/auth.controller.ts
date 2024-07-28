@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UnauthorizedException, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UnauthorizedException, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/signIn.dto';
 import { CookieOptions, Request, Response } from 'express';
@@ -15,6 +15,7 @@ import { RefreshTokenGuard } from './guards/refresh-token.guard';
 import { CurrentUser } from 'src/core/decorators/currentuser.decorator';
 import { AuthUser } from 'src/core/types/global.types';
 import { ChangePasswordDto } from './dto/changePassword.dto';
+import { GoogleOAuthDto } from './dto/googleOAuth.dto';
 require('dotenv').config();
 
 @ApiTags('Authentication')
@@ -22,14 +23,22 @@ require('dotenv').config();
 export class AuthController {
     constructor(private authService: AuthService) { }
 
-    cookieOptions: CookieOptions = {
+    refresshCookieOptions: CookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'none',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 day
     }
+    accessCookieOptions: CookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'none',
+        maxAge: 15 * 60 * 1000, // 15 min
+    }
 
-    private readonly refreshHeaderKey = process.env.REFRESH_HEADER_KEY
+    private readonly ACCESS_TOKEN_KEY = 'access_token';
+    private readonly REFRESH_TOKEN_KEY = 'refresh_token';
+    private readonly REFRESH_HEADER_KEY = process.env.REFRESH_HEADER_KEY
 
     @Public()
     @HttpCode(HttpStatus.OK)
@@ -37,12 +46,13 @@ export class AuthController {
     @ApiConsumes('multipart/form-data')
     @FormDataRequest({ storage: FileSystemStoredFile })
     async signIn(@Body() signInDto: SignInDto, @Res({ passthrough: true }) res: Response, @Req() req: Request) {
-        const { access_token, new_refresh_token, payload } = await this.authService.signIn(signInDto, req, res, this.cookieOptions);
+        const { access_token, new_refresh_token, payload } = await this.authService.signIn(signInDto, req, res, this.refresshCookieOptions);
 
-        res.cookie('refresh_token', new_refresh_token, this.cookieOptions);
-        res.set(this.refreshHeaderKey, `${new_refresh_token}`);
+        res.cookie(this.ACCESS_TOKEN_KEY, access_token, this.refresshCookieOptions);
+        res.cookie(this.REFRESH_TOKEN_KEY, new_refresh_token, this.refresshCookieOptions);
+        res.set(this.REFRESH_HEADER_KEY, `${new_refresh_token}`);
 
-        return { access_token, refreshToken: new_refresh_token, payload };
+        return { access_token, refresh_token: new_refresh_token, payload };
     }
 
     @Public()
@@ -52,16 +62,36 @@ export class AuthController {
     @UseInterceptors(TransactionInterceptor)
     @UseGuards(RefreshTokenGuard)
     @FormDataRequest({ storage: FileSystemStoredFile })
-    async refreshToken(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    async refresh_token(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
         const refresh_token = req.cookies?.refresh_token;
         if (!refresh_token) throw new UnauthorizedException();
 
-        const { new_access_token, new_refresh_token, payload } = await this.authService.refresh(refresh_token, res, this.cookieOptions, this.refreshHeaderKey);
+        res.clearCookie(this.ACCESS_TOKEN_KEY, this.accessCookieOptions); // CLEAR COOKIE, BCZ A NEW ONE IS TO BE GENERATED
+        res.clearCookie(this.REFRESH_TOKEN_KEY, this.refresshCookieOptions); // CLEAR COOKIE, BCZ A NEW ONE IS TO BE GENERATED
+        res.removeHeader(this.REFRESH_HEADER_KEY);
 
-        res.cookie('refresh_token', new_refresh_token, this.cookieOptions);
-        res.set(this.refreshHeaderKey, `${new_refresh_token}`);
+        const { new_access_token, new_refresh_token, payload } = await this.authService.refresh(refresh_token);
+
+        res.cookie(this.ACCESS_TOKEN_KEY, new_access_token, this.accessCookieOptions);
+        res.cookie(this.REFRESH_TOKEN_KEY, new_refresh_token, this.refresshCookieOptions);
+        res.set(this.REFRESH_HEADER_KEY, `${new_refresh_token}`);
 
         return { access_token: new_access_token, refresh_token: new_refresh_token, payload };
+    }
+
+    @Public()
+    @Post('googleOAuthLogin')
+    @ApiConsumes('multipart/form-data')
+    @FormDataRequest({ storage: FileSystemStoredFile })
+    @UseInterceptors(TransactionInterceptor)
+    async googleOAuthLogin(@Body() googleOAuthDto: GoogleOAuthDto, @Res({ passthrough: true }) res: Response, @Req() req: Request) {
+        const { access_token, new_refresh_token, payload } = await this.authService.googleOAuthLogin(googleOAuthDto, req, res, this.refresshCookieOptions);
+
+        res.cookie(this.ACCESS_TOKEN_KEY, access_token, this.refresshCookieOptions);
+        res.cookie(this.REFRESH_TOKEN_KEY, new_refresh_token, this.refresshCookieOptions);
+        res.set(this.REFRESH_HEADER_KEY, `${new_refresh_token}`);
+
+        return { access_token, refresh_token: new_refresh_token, payload };
     }
 
     @Public()
@@ -95,8 +125,9 @@ export class AuthController {
 
         await this.authService.logout(refresh_token);
 
-        res.clearCookie('refresh_token', this.cookieOptions);
-        res.removeHeader(this.refreshHeaderKey);
+        res.clearCookie(this.ACCESS_TOKEN_KEY, this.accessCookieOptions);
+        res.clearCookie(this.REFRESH_TOKEN_KEY, this.refresshCookieOptions);
+        res.removeHeader(this.REFRESH_HEADER_KEY);
         return;
     }
 

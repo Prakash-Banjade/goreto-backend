@@ -8,6 +8,7 @@ export class StripeService {
   constructor(@Inject('STRIPE_API_KEY') private readonly apiKey: string) {
     this.stripe = new Stripe(this.apiKey, {
       apiVersion: '2024-04-10',
+      typescript: true,
     });
   }
 
@@ -23,19 +24,16 @@ export class StripeService {
       });
       return paymentIntent;
     } catch (e) {
-      console.log(e)
       throw new BadRequestException('Failed to create payment intent');
     }
   }
 
   async confirmPayment(paymentIntentId: string) {
-    try {
-      const paymentIntent = await this.stripe.paymentIntents.confirm(paymentIntentId);
-      return paymentIntent;
-    } catch (e) {
-      console.log(e)
-      throw new BadRequestException('Failed to confirm payment intent');
-    }
+    const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status !== 'succeeded') throw new BadRequestException('Payment intent not succeeded');
+
+    return paymentIntent;
   }
 
   async getPaymentIndents() {

@@ -1,6 +1,6 @@
 import { Controller, Get, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileImageDto, UpdateUserDto } from './dto/update-user.dto';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { FormDataRequest, FileSystemStoredFile } from 'nestjs-form-data';
 import { ChekcAbilities } from 'src/core/decorators/abilities.decorator';
@@ -39,6 +39,14 @@ export class UsersController {
   @ChekcAbilities({ action: Action.READ, subject: 'all' })
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
+  }
+
+  @Patch('upload')
+  @ApiConsumes('multipart/form-data')
+  @FormDataRequest({ storage: FileSystemStoredFile, limits: { fileSize: 5 * 1024 * 1024, files: 1 } })
+  @ChekcAbilities({ action: Action.UPDATE, subject: User })
+  updateImage(@Body() pdateProfileImageDto: UpdateProfileImageDto, @CurrentUser() currentUser: AuthUser) {
+    return this.usersService.updateImage(pdateProfileImageDto, currentUser);
   }
 
   @Patch()

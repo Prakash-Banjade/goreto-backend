@@ -12,4 +12,8 @@ export class OrderQueryDto extends QueryDto {
     @IsString()
     @IsOptional()
     cancelled?: string;
+
+    @IsString()
+    @IsOptional()
+    recent: string;
 }
