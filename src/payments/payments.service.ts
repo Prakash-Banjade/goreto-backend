@@ -28,11 +28,11 @@ export class PaymentsService {
           paymentMethod: paymentMethod,
           status: PaymentStatus.COMPLETED
         })
-
         await this.paymentsRepository.savePayment(payment); // transaction
 
         return {
-          message: `Be ready with amount ${CONSTANTS.defaultProductPriceUnit} ${order.totalAmount} on delivery. Thank you.`,
+          message: `Order placed. Payment completed.`,
+          status: PaymentStatus.COMPLETED
         }
       }
 
@@ -46,6 +46,7 @@ export class PaymentsService {
 
         return {
           message: `Be ready with amount ${CONSTANTS.defaultProductPriceUnit} ${order.totalAmount} on delivery. Thank you.`,
+          status: PaymentStatus.PENDING
         }
       }
 
@@ -65,7 +66,8 @@ export class PaymentsService {
 
         return {
           message: 'Please confirm payment',
-          client_secret: paymentIntent.client_secret
+          client_secret: paymentIntent.client_secret,
+          status: PaymentStatus.AWATING_PAYMENT
         }
       }
     }

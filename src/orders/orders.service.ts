@@ -20,6 +20,7 @@ import { PaymentsService } from 'src/payments/payments.service';
 import { Sku } from 'src/products/skus/entities/sku.entity';
 import { SkuRepository } from 'src/products/skus/repository/sku.repository';
 import { CartItem } from 'src/cart-items/entities/cart-item.entity';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class OrdersService {
@@ -36,6 +37,7 @@ export class OrdersService {
     private readonly usersService: UsersService,
     private readonly cartsService: CartsService,
     private readonly shippingAddressesService: ShippingAddressesService,
+    private readonly mailService: MailService,
   ) { }
 
   async create(createOrderDto: CreateOrderDto, currentUser: AuthUser) {
@@ -85,7 +87,18 @@ export class OrdersService {
     // PROCESS PAYMENT
     const paymentResult = await this.paymentService.create(savedOrder, createOrderDto.paymentMethod);
 
-    // TODO: INCREASE PRODUCT SOLD COUNT AFTER SUCCESSFUL PAYMENT
+    // UPDATE PRODUCT SOLD QUANTITY AFTER SUCCESSFUL PAYMENT
+    if (paymentResult.status === PaymentStatus.COMPLETED) {
+      for (const cartItem of cart.cartItems) {
+        const productSku = cartItem.sku;
+        productSku.soldCount += cartItem.quantity;
+
+        await this.skuRepository.saveSku(productSku); // transaction
+      }
+    }
+
+    // SEND MAIL TO CUSTOMER FOR ORDER CONFIRMATION
+    await this.mailService.sendOrderConfirmation(user.account, savedOrder, cart.cartItems);
 
     return paymentResult;
   }
@@ -276,17 +289,47 @@ export class OrdersService {
   async update(id: string, updateOrderDto: UpdateOrderDto) {
     const existing = await this.ordersRepo.findOne({
       where: { id },
+      relations: {
+        orderItems: {
+          sku: {
+            product: true,
+          }
+        },
+        user: {
+          account: true
+        },
+        shippingAddress: {
+          address: true
+        }
+      }
     })
     if (!existing) throw new NotFoundException('Order not found')
 
-    if (existing.status === OrderStatus.COMPLETED || existing.status === OrderStatus.CANCELLED) throw new BadRequestException('Order already delivered')
+    if (existing.status === OrderStatus.COMPLETED || existing.status === OrderStatus.CANCELLED) throw new BadRequestException('Order already delivered or cancelled')
 
     existing.status = updateOrderDto.status;
 
     await this.ordersRepository.saveOrder(existing); // transaction
-    updateOrderDto.status === OrderStatus.COMPLETED && await this.paymentService.update(existing.payment.id, { status: PaymentStatus.COMPLETED })
 
-    // TODO: NOTIFY CUSTOMER BY SENDING EMAIL ABOUT THE ORDER STATUS
+    if (updateOrderDto.status === OrderStatus.COMPLETED) {
+      await this.paymentService.update(existing.payment.id, { status: PaymentStatus.COMPLETED })
+
+      // UPDATE SOLD COUNT
+      for (const orderItem of existing.orderItems) {
+        const sku = orderItem.sku;
+        if (sku) {
+          sku.soldCount += orderItem.quantity;
+          await this.skuRepository.saveSku(sku);
+        }
+      }
+    }
+
+    // SEND MAIL
+    if (updateOrderDto.status === OrderStatus.CANCELLED) {
+      await this.mailService.sendOrderCancellationByAdmin(existing.user.account, existing, existing.orderItems);
+    }
+
+    // TODO: send mail for order processing and shipped status
 
     return {
       message: 'Order updated',
@@ -319,6 +362,9 @@ export class OrdersService {
     })
     await this.ordersRepository.cancelOrder(canceledOrder);
     await this.paymentService.update(existing.payment.id, { status: PaymentStatus.FAILED });
+
+    // SEND MAIL
+    await this.mailService.sendOrderCancellationByUser(existing.user.account, existing, existing.orderItems);
 
     return {
       message: "Order cancelled",

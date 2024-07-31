@@ -66,6 +66,7 @@ export class ShippingAddressesService {
   async getDefaultShippingAddress(currentUser: AuthUser) {
     const defaultShippingAddress = await this.shippingAddressRepo.findOne({
       where: { user: { id: currentUser.userId }, default: true },
+      relations: { address: true },
     })
 
     return defaultShippingAddress;

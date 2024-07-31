@@ -50,4 +50,7 @@ export class Sku extends BaseEntity {
 
     @OneToMany(() => OrderItem, orderItem => orderItem.sku, { nullable: true })
     orderItems: OrderItem[]
+
+    @Column({ type: 'int', default: 0 })
+    soldCount: number
 }
