@@ -86,14 +86,14 @@ import { ContactRequestsModule } from './contact-requests/contact-requests.modul
   controllers: [AppController],
   providers: [
     AppService,
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: AuthGuard, // global auth guard
-    // },
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: AbilitiesGuard, // global ability guard
-    // },
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard, // global auth guard
+    },
+    {
+      provide: APP_GUARD,
+      useClass: AbilitiesGuard, // global ability guard
+    },
     // {
     //   provide: APP_GUARD,
     //   useClass: ThrottlerGuard, // global rate limiting, but can be overriden in route level
